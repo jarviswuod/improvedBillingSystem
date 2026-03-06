@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: ImprovedBillingSystem
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/billing
+    username: postgres
+    password: "#Dot9047#Dot9047"
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
