@@ -1,27 +1,27 @@
 package com.jarviswuod.improvedbillingsystem.payment;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.PastOrPresent;
-import jakarta.validation.constraints.Positive;
+import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.*;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 public record PaymentDto(
 
-        @NotBlank(message = "Payment is only to a valid invoice")
+        @NotNull(message = "Payment can be only done to a valid invoice")
         Long invoiceId,
 
-        @NotBlank
-        LocalDateTime paymentDate,
-
-        @NotBlank
-        @Positive(message = "Payment amount must be positive")
+        @NotNull(message = "Amount cannot be null")
+        @Positive(message = "Amount must be positive and non-zero")
         Double amount,
 
+        @NotNull(message = "Due date cannot be null")
         @PastOrPresent(message = "A payment’s date must be on or before the current date (no future payments)")
+        LocalDate paymentDate,
+
+        @Nullable
         PaymentMethod paymentMethod,
 
-        @NotBlank
+        @NotBlank(message = "Transaction Number must not be null")
         String transactionNumber
 ) {
 }

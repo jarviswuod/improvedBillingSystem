@@ -1,5 +1,6 @@
 package com.jarviswuod.improvedbillingsystem.customer;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.jarviswuod.improvedbillingsystem.invoice.Invoice;
 import com.jarviswuod.improvedbillingsystem.utils.BaseEntity;
 import jakarta.persistence.Column;
@@ -32,5 +33,6 @@ public class Customer extends BaseEntity {
     private String phone;
 
     @OneToMany(mappedBy = "customer")
+    @JsonManagedReference
     private List<Invoice> invoice;
 }

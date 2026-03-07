@@ -1,5 +1,6 @@
 package com.jarviswuod.improvedbillingsystem.invoice;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,24 +14,30 @@ public class InvoiceController {
     private final InvoiceService invoiceService;
 
     @PostMapping
-    public Invoice createInvoice(
-            @RequestBody InvoiceDto invoiceDto
+    public String createInvoice(
+            @Valid @RequestBody InvoiceDto invoiceDto
     ) {
-        return invoiceService.save(invoiceDto);
+        invoiceService.save(invoiceDto);
+        return "Invoice created Successfully";
     }
 
     @GetMapping
-    public List<Invoice> findAllInvoices() {
+    public List<InvoiceResponseDtoList> findAllInvoices() {
         return invoiceService.findAllInvoices();
     }
 
     @GetMapping("/{invoice-id}")
-    public Invoice findInvoiceById(@PathVariable("invoice-id") Long invoiceId) {
+    public InvoiceResponseDto findInvoiceById(
+            @PathVariable("invoice-id") Long invoiceId
+    ) {
         return invoiceService.findInvoicesById(invoiceId);
     }
 
     @DeleteMapping("/{invoice-id}")
-    public void deleteInvoice(@PathVariable("invoice-id") Long invoiceId) {
+    public String deleteInvoice(
+            @PathVariable("invoice-id") Long invoiceId
+    ) {
         invoiceService.deleteInvoiceById(invoiceId);
+        return "Invoice deleted Successfully";
     }
 }

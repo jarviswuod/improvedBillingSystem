@@ -1,5 +1,6 @@
 package com.jarviswuod.improvedbillingsystem.payment;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,19 +14,20 @@ public class PaymentController {
     private final PaymentService paymentService;
 
     @PostMapping
-    public Payment createPayment(
-            @RequestBody PaymentDto paymentDto
+    public String createPayment(
+            @Valid @RequestBody PaymentDto paymentDto
     ) {
-        return paymentService.createPayment(paymentDto);
+        paymentService.createPayment(paymentDto);
+        return "Payment Successfully Done!";
     }
 
     @GetMapping
-    public List<Payment> findAllPayments() {
+    public List<PaymentResponseDtoList> findAllPayments() {
         return paymentService.findAllPayments();
     }
 
     @GetMapping("{payment-id}")
-    public Payment findPaymentById(
+    public PaymentResponseDto findPaymentById(
             @PathVariable("payment-id") Long paymentId
     ) {
         return paymentService.findPaymentById(paymentId);

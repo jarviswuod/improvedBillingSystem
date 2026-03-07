@@ -1,8 +1,9 @@
 package com.jarviswuod.improvedbillingsystem.invoice;
 
-import com.jarviswuod.improvedbillingsystem.utils.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.jarviswuod.improvedbillingsystem.customer.Customer;
 import com.jarviswuod.improvedbillingsystem.payment.Payment;
+import com.jarviswuod.improvedbillingsystem.utils.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -29,9 +30,11 @@ public class Invoice extends BaseEntity {
     private Double balance;
 
     @ManyToOne
+    @JsonBackReference
     @JoinColumn(name = "customer_id")
     private Customer customer;
 
     @OneToMany(mappedBy = "invoice")
+    @JsonBackReference
     private List<Payment> payments;
 }

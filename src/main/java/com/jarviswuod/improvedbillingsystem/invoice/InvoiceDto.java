@@ -1,21 +1,22 @@
 package com.jarviswuod.improvedbillingsystem.invoice;
 
 import jakarta.validation.constraints.Future;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 import java.time.LocalDateTime;
 
 public record InvoiceDto(
-        @NotBlank(message = "Amount cannot be empty")
+
+        @NotNull(message = "Amount cannot be null")
         @Positive(message = "Amount must be positive and non-zero")
         Double amount,
 
-        @NotBlank(message = "Due date cannot be empty")
+        @NotNull(message = "Due date cannot be null")
         @Future(message = "Due date must be in the future")
         LocalDateTime dueDate,
 
-        @NotBlank
+        @NotNull(message = "CustomerId cannot be null")
         Long customerId
 ) {
 }

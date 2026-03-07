@@ -15,16 +15,6 @@ public class CustomerMapper {
         return customer;
     }
 
-    public Customer toCustomer(CustomerResponseDto customerResponseDto) {
-
-        Customer customer = new Customer();
-        customer.setName(customerResponseDto.name());
-        customer.setEmail(customerResponseDto.email());
-        customer.setPhone(customerResponseDto.phone());
-
-        return customer;
-    }
-
     public CustomerResponseDto toCustomerResponseDto(Customer customer) {
 
         return new CustomerResponseDto(

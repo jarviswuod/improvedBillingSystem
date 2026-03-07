@@ -34,7 +34,7 @@ public class CustomerService {
 
     public CustomerResponseDto findCustomerById(Long customerId) {
 
-        Customer customer=getCustomerEntityById(customerId);
+        Customer customer = getCustomerEntityById(customerId);
         return customerMapper.toCustomerResponseDto(customer);
     }
 

@@ -1,10 +1,12 @@
 package com.jarviswuod.improvedbillingsystem.payment;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.jarviswuod.improvedbillingsystem.invoice.Invoice;
 import com.jarviswuod.improvedbillingsystem.utils.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @EqualsAndHashCode(callSuper = true)
@@ -20,7 +22,7 @@ public class Payment extends BaseEntity {
     private Double amount;
 
     @Column(nullable = false)
-    private LocalDateTime paymentDate;
+    private LocalDate paymentDate;
 
     private PaymentMethod paymentMethod;
 
@@ -29,5 +31,6 @@ public class Payment extends BaseEntity {
 
     @ManyToOne
     @JoinColumn(name = "invoice_id")
+    @JsonManagedReference
     private Invoice invoice;
 }

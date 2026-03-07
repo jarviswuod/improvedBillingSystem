@@ -1,56 +1,54 @@
 package com.jarviswuod.improvedbillingsystem.invoice;
 
-import com.jarviswuod.improvedbillingsystem.customer.Customer;
-import com.jarviswuod.improvedbillingsystem.customer.CustomerMapper;
-import com.jarviswuod.improvedbillingsystem.customer.CustomerResponseDto;
-import com.jarviswuod.improvedbillingsystem.customer.CustomerService;
 import com.jarviswuod.improvedbillingsystem.exception.BusinessRuleViolationException;
+import com.jarviswuod.improvedbillingsystem.payment.Payment;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class InvoiceService {
 
-    private final InvoiceRepository invoiceRepository;
-    private final CustomerService customerService;
-    private final CustomerMapper customerMapper;
+    private final InvoiceRepository invoiceRepo;
+    private final InvoiceMapper invoiceMapper;
 
-    public Invoice save(InvoiceDto invoiceDto) {
-        Invoice invoice = toInvoice(invoiceDto);
+    public void save(InvoiceDto invoiceDto) {
+        Invoice invoice = invoiceMapper.toInvoice(invoiceDto);
 
-        return invoiceRepository.save(invoice);
+        invoiceRepo.save(invoice);
     }
 
-    private Invoice toInvoice(InvoiceDto invoiceDto) {
-
-        Invoice invoice = new Invoice();
-        invoice.setDueData(invoiceDto.dueDate());
-        invoice.setAmount(invoiceDto.amount());
-        invoice.setBalance(invoiceDto.amount());
-
-        Long customerId = invoiceDto.customerId();
-        CustomerResponseDto dto = customerService.findCustomerById(customerId);
-
-        Customer customer = customerMapper.toCustomer(dto);
-        invoice.setCustomer(customer);
-
-        return invoice;
+    public List<InvoiceResponseDtoList> findAllInvoices() {
+        return invoiceRepo.findAll()
+                .stream()
+                .map(invoiceMapper::toInvoiceResponseDtoList)
+                .collect(Collectors.toList());
     }
 
-    public List<Invoice> findAllInvoices() {
-        return invoiceRepository.findAll();
+    public InvoiceResponseDto findInvoicesById(Long invoiceId) {
+        Invoice invoice = getInvoiceById(invoiceId);
+        return invoiceMapper.toInvoiceResponseDto(invoice);
     }
 
-    public Invoice findInvoicesById(Long invoiceId) {
-        return invoiceRepository.findById(invoiceId)
+    public Invoice getInvoiceById(Long invoiceId) {
+        return invoiceRepo.findById(invoiceId)
                 .orElseThrow(() -> new BusinessRuleViolationException("Invoice with id " + invoiceId + " does not exist."));
     }
 
     public void deleteInvoiceById(Long invoiceId) {
+        Invoice invoice = getInvoiceById(invoiceId);
+        List<Payment> payments = invoice.getPayments();
 
-        invoiceRepository.deleteById(invoiceId);
+        if (payments.isEmpty())
+            invoiceRepo.deleteById(invoiceId);
+        else
+            throw new BusinessRuleViolationException("An invoice with payments cannot be deleted");
+    }
+
+    public void updateInvoice(Invoice invoice) {
+        invoiceRepo.save(invoice);
     }
 }

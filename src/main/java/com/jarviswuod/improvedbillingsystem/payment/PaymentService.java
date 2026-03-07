@@ -3,71 +3,72 @@ package com.jarviswuod.improvedbillingsystem.payment;
 import com.jarviswuod.improvedbillingsystem.exception.BusinessRuleViolationException;
 import com.jarviswuod.improvedbillingsystem.exception.ResourceNotFoundException;
 import com.jarviswuod.improvedbillingsystem.invoice.Invoice;
+import com.jarviswuod.improvedbillingsystem.invoice.InvoiceMapper;
 import com.jarviswuod.improvedbillingsystem.invoice.InvoiceService;
 import com.jarviswuod.improvedbillingsystem.invoice.InvoiceStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class PaymentService {
 
     private final PaymentRepository paymentRepo;
+    private final PaymentMapper paymentMapper;
     private final InvoiceService invoiceService;
+    private final InvoiceMapper invoiceMapper;
 
-    public Payment createPayment(PaymentDto paymentDto) {
-        Payment payment = toPayment(paymentDto);
+    public void createPayment(PaymentDto paymentDto) {
 
-        invoiceStatusUpdate(payment);
+        Payment payment = findByTransactionNumber(paymentDto.transactionNumber());
 
-        return paymentRepo.save(payment);
+        if (payment != null)
+            throw new BusinessRuleViolationException("Invalid Transaction Number");
+
+        Payment paymentObj = paymentMapper.toPayment(paymentDto);
+
+        Payment paymentMade = paymentRepo.save(paymentObj);
+        invoiceStatusUpdate(paymentMade);
+    }
+
+
+    private Payment findByTransactionNumber(String transactionNumber) {
+        return paymentRepo.findByTransactionNumber(transactionNumber);
     }
 
 
     private void invoiceStatusUpdate(Payment payment) {
         Invoice invoice = payment.getInvoice();
 
-        Double invoiceBalance = invoice.getBalance();
-        invoiceBalance -= payment.getAmount();
-        InvoiceStatus status = invoice.getStatus();
-
-        if (invoiceBalance < 0) {
+        invoice.setBalance(invoice.getBalance() - payment.getAmount());
+        if (invoice.getBalance() < 0) {
             throw new BusinessRuleViolationException("Payment must not exceed the invoice amount");
-        } else if (invoiceBalance == 0) {
-            status = InvoiceStatus.PAID;
-        } else if (invoiceBalance > 0) {
-            status = InvoiceStatus.PENDING;
+        } else if (invoice.getBalance() == 0) {
+            invoice.setStatus(InvoiceStatus.PAID);
+        } else if (invoice.getBalance() > 0) {
+            invoice.setStatus(InvoiceStatus.PARTIALLY_PAID);
         }
-
-        invoice.setStatus(status);
+        invoiceService.updateInvoice(invoice);
     }
 
-    private Payment toPayment(PaymentDto paymentDto) {
+    public List<PaymentResponseDtoList> findAllPayments() {
 
-        Payment payment = new Payment();
-        payment.setAmount(paymentDto.amount());
-        payment.setPaymentMethod(paymentDto.paymentMethod());
-        payment.setPaymentDate(paymentDto.paymentDate());
-        payment.setTransactionNumber(paymentDto.transactionNumber());
-
-        Long invoiceId = paymentDto.invoiceId();
-
-        Invoice invoice = invoiceService.findInvoicesById(invoiceId);
-        payment.setInvoice(invoice);
-
-        return payment;
+        return paymentRepo.findAll()
+                .stream()
+                .map(paymentMapper::toPaymentResponseDtoList)
+                .collect(Collectors.toList());
     }
 
-    public List<Payment> findAllPayments() {
-
-        return paymentRepo.findAll();
-    }
-
-    public Payment findPaymentById(Long paymentId) {
-
+    private Payment getPaymentById(Long paymentId){
         return paymentRepo.findById(paymentId)
                 .orElseThrow(() -> new ResourceNotFoundException("No payment with id " + paymentId));
+    }
+
+    public PaymentResponseDto findPaymentById(Long paymentId) {
+
+        return paymentMapper.toPaymentResponseDto(getPaymentById(paymentId));
     }
 }
