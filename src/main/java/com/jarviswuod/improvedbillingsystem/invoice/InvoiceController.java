@@ -2,6 +2,8 @@ package com.jarviswuod.improvedbillingsystem.invoice;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,30 +16,33 @@ public class InvoiceController {
     private final InvoiceService invoiceService;
 
     @PostMapping
-    public String createInvoice(
+    public ResponseEntity<String> createInvoice(
             @Valid @RequestBody InvoiceDto invoiceDto
     ) {
         invoiceService.save(invoiceDto);
-        return "Invoice created Successfully";
+        return new ResponseEntity<>("Invoice created Successfully", HttpStatus.CREATED);
     }
 
     @GetMapping
-    public List<InvoiceResponseDtoList> findAllInvoices() {
-        return invoiceService.findAllInvoices();
+    public ResponseEntity<List<InvoiceResponseDtoList>> findAllInvoices() {
+        return ResponseEntity
+                .ok(invoiceService.findAllInvoices());
     }
 
     @GetMapping("/{invoice-id}")
-    public InvoiceResponseDto findInvoiceById(
+    public ResponseEntity<InvoiceResponseDto> findInvoiceById(
             @PathVariable("invoice-id") Long invoiceId
     ) {
-        return invoiceService.findInvoicesById(invoiceId);
+        return ResponseEntity
+                .ok(invoiceService.findInvoicesById(invoiceId));
     }
 
     @DeleteMapping("/{invoice-id}")
-    public String deleteInvoice(
+    public ResponseEntity<String> deleteInvoice(
             @PathVariable("invoice-id") Long invoiceId
     ) {
         invoiceService.deleteInvoiceById(invoiceId);
-        return "Invoice deleted Successfully";
+        return ResponseEntity
+                .ok("Invoice deleted Successfully");
     }
 }

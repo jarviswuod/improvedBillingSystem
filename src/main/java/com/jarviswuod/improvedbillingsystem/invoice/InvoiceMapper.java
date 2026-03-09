@@ -28,7 +28,7 @@ public class InvoiceMapper {
         invoice.setStatus(InvoiceStatus.PENDING);
 
         Long customerId = invoiceDto.customerId();
-        Customer customer = customerService.getCustomerEntityById(customerId);
+        Customer customer = customerService.findActiveCustomerById(customerId);
 
         invoice.setCustomer(customer);
 

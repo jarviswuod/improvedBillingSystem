@@ -9,6 +9,8 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.util.List;
 
@@ -19,6 +21,8 @@ import java.util.List;
 @Entity
 @Table(name = "customers")
 @Builder
+@SQLRestriction("is_deleted = false")
+@SQLDelete(sql = "UPDATE customers SET is_deleted = true, deleted_at = NOW() WHERE id = ?")
 public class Customer extends BaseEntity {
 
     @Column(nullable = false)

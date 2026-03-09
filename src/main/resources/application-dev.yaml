@@ -3,7 +3,7 @@ spring:
     name: ImprovedBillingSystem
   config:
     activate:
-      on-profile: default
+      on-profile: dev
 
   datasource:
     url: jdbc:postgresql://localhost:5432/billing

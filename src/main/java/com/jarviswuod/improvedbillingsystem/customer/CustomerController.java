@@ -2,6 +2,8 @@ package com.jarviswuod.improvedbillingsystem.customer;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,36 +16,56 @@ public class CustomerController {
     private final CustomerService customerService;
 
     @PostMapping
-    public CustomerResponseDto createCustomer(
+    public ResponseEntity<CustomerResponseDto> createCustomer(
             @Valid @RequestBody CustomerDto customerDto
     ) {
-        return customerService.createCustomer(customerDto);
+        return new ResponseEntity<>(customerService.createCustomer(customerDto), HttpStatus.CREATED);
     }
 
     @GetMapping
-    public List<CustomerResponseDtoList> findAllCustomers() {
-        return customerService.findAllCustomers();
+    public ResponseEntity<List<CustomerResponseDtoList>> getAllActiveCustomers() {
+        return ResponseEntity.ok(customerService.getAllActiveCustomers());
     }
 
-    @GetMapping("/{customer-id}")
-    public CustomerResponseDto findAllCustomers(
-            @PathVariable("customer-id") Long customerId
+    @GetMapping("/{id}")
+    public ResponseEntity<CustomerResponseDto> getCustomerById(
+            @PathVariable Long id
     ) {
-        return customerService.findCustomerById(customerId);
+        return ResponseEntity.ok(customerService.findCustomerById(id));
     }
 
-    @PutMapping("/{customer-id}")
-    public CustomerResponseDto updateCustomer(
-            @PathVariable("customer-id") Long customerId,
+
+    @PutMapping("/{id}")
+    public ResponseEntity<CustomerResponseDto> updateCustomer(
+            @PathVariable Long id,
             @Valid @RequestBody CustomerDto customerDto
     ) {
-        return customerService.updateCustomer(customerId, customerDto);
+        return ResponseEntity.ok(customerService.updateCustomer(id, customerDto));
     }
 
-    @DeleteMapping("/{customer-id}")
-    public void deleteCustomer(
-            @PathVariable("customer-id") Long customerId
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> softDeleteCustomer(
+            @PathVariable Long id
     ) {
-        customerService.deleteCustomer(customerId);
+        customerService.softDeleteCustomer(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{id}/restore")
+    public ResponseEntity<Void> restoreCustomer(@PathVariable Long id) {
+        customerService.restoreCustomer(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/deleted")
+    public ResponseEntity<List<CustomerResponseDtoList>> getAllDeletedCustomers() {
+        return ResponseEntity.ok(customerService.getAllDeletedCustomers());
+    }
+
+    @DeleteMapping("/{id}/permanent")
+    public ResponseEntity<Void> permanentDeleteUser(@PathVariable Long id) {
+        customerService.permanentDeleteUser(id);
+        return ResponseEntity.noContent().build();
     }
 }

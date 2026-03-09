@@ -2,6 +2,8 @@ package com.jarviswuod.improvedbillingsystem.payment;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,22 +16,24 @@ public class PaymentController {
     private final PaymentService paymentService;
 
     @PostMapping
-    public String createPayment(
+    public ResponseEntity<String> createPayment(
             @Valid @RequestBody PaymentDto paymentDto
     ) {
         paymentService.createPayment(paymentDto);
-        return "Payment Successfully Done!";
+        return new ResponseEntity<>("Payment Successfully Done!", HttpStatus.CREATED);
     }
 
     @GetMapping
-    public List<PaymentResponseDtoList> findAllPayments() {
-        return paymentService.findAllPayments();
+    public ResponseEntity<List<PaymentResponseDtoList>> findAllPayments() {
+        return ResponseEntity
+                .ok(paymentService.findAllPayments());
     }
 
     @GetMapping("{payment-id}")
-    public PaymentResponseDto findPaymentById(
+    public ResponseEntity<PaymentResponseDto> findPaymentById(
             @PathVariable("payment-id") Long paymentId
     ) {
-        return paymentService.findPaymentById(paymentId);
+        return ResponseEntity
+                .ok(paymentService.findPaymentById(paymentId));
     }
 }
