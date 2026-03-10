@@ -15,25 +15,45 @@ public class PaymentController {
 
     private final PaymentService paymentService;
 
+
     @PostMapping
     public ResponseEntity<String> createPayment(
             @Valid @RequestBody PaymentDto paymentDto
     ) {
         paymentService.createPayment(paymentDto);
-        return new ResponseEntity<>("Payment Successfully Done!", HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).body("Payment Successfully Done!");
     }
+
 
     @GetMapping
     public ResponseEntity<List<PaymentResponseDtoList>> findAllPayments() {
-        return ResponseEntity
-                .ok(paymentService.findAllPayments());
+        return ResponseEntity.ok(paymentService.findAllPayments());
     }
 
-    @GetMapping("{payment-id}")
+
+    @GetMapping("{id}")
     public ResponseEntity<PaymentResponseDto> findPaymentById(
-            @PathVariable("payment-id") Long paymentId
+            @PathVariable Long id
     ) {
-        return ResponseEntity
-                .ok(paymentService.findPaymentById(paymentId));
+        return ResponseEntity.ok(paymentService.findPaymentById(id));
+    }
+
+
+    @PutMapping("/{id}")
+    public ResponseEntity<String> updatePayment(
+            @Valid @RequestBody UpdatePaymentDto dto,
+            @PathVariable Long id
+    ) {
+        paymentService.updatePayment(dto, id);
+        return ResponseEntity.ok("Payment updated successfully");
+    }
+
+
+    @DeleteMapping("{id}")
+    public ResponseEntity<Void> deletePaymentById(
+            @PathVariable Long id
+    ) {
+        paymentService.deletePaymentById(id);
+        return ResponseEntity.noContent().build();
     }
 }

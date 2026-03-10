@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -19,15 +20,20 @@ public class CustomerService {
     private final CustomerRepository customerRepo;
     private final CustomerMapper customerMapper;
 
-    public CustomerResponseDto createCustomer(CustomerDto customerDto) {
-        if (customerRepo.existsByEmailIncludingDeleted(customerDto.email()))
-            throw new BusinessRuleViolationException("Account with email address " + customerDto.email() + " already exists");
 
+    public CustomerResponseDto createCustomer(CustomerDto customerDto) {
+        if (customerRepo.existsByEmailIncludingDeleted(customerDto.email())) {
+            log.warn("Already Existing customer with email");
+            throw new BusinessRuleViolationException("Account with email address " + customerDto.email() + " already exists");
+        }
         Customer customer = customerMapper.toCustomer(customerDto);
         Customer savedCustomer = customerRepo.save(customer);
 
+        log.info("Customer created successfully customerId: {}", savedCustomer.getId());
+
         return customerMapper.toCustomerResponseDto(savedCustomer);
     }
+
 
     @Transactional(readOnly = true)
     public List<CustomerResponseDtoList> getAllActiveCustomers() {
@@ -37,13 +43,17 @@ public class CustomerService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
-    public CustomerResponseDto findCustomerById(Long customerId) {
-        Customer customer = findActiveCustomerById(customerId);
 
+    @Transactional(readOnly = true)
+    public CustomerResponseDto findCustomerById(Long id) {
+        Customer customer = findActiveCustomerById(id);
+
+        log.info("Customer retrieved customerId: {}", id);
         return customerMapper.toCustomerResponseDto(customer);
     }
 
+
+    @Transactional(readOnly = true)
     public Customer findActiveCustomerById(Long id) {
         return customerRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("No Customer found with id: " + id));
@@ -53,49 +63,52 @@ public class CustomerService {
     public CustomerResponseDto updateCustomer(Long id, CustomerDto customerDto) {
         Customer customer = findActiveCustomerById(id);
 
-        if (customerRepo.existsByEmailIncludingDeleted(customerDto.email()) &&
-                !customer.getEmail().equals(customerDto.email())) {
-            throw new BusinessRuleViolationException(
-                    "Account with email address " + customerDto.email() + " already exists");
+        if (customerRepo.existsByEmailIncludingDeleted(customerDto.email())) {
+            throw new BusinessRuleViolationException("Account with email address " + customerDto.email() + " already exists");
         }
 
         customerMapper.updateCustomer(customerDto, customer);
         Customer updatedCustomer = customerRepo.save(customer);
 
+        log.info("Customer updated customerId: {}", updatedCustomer.getId());
         return customerMapper.toCustomerResponseDto(updatedCustomer);
     }
 
+
     public void softDeleteCustomer(Long id) {
-        Customer customer = findDeletedCustomerById(id);
-        if (customer.isDeleted())
+        Optional<Customer> customerActive = customerRepo.findById(id);
+        Optional<Customer> customerDeleted = customerRepo.findByIdInDeleted(id);
+
+        if (customerDeleted.isPresent())
             throw new BusinessRuleViolationException("Customer already deleted with ID: " + id);
 
-        customerRepo.deleteById(id);
+        else if (customerActive.isPresent())
+            customerRepo.deleteById(id);
+
+        else
+            throw new BusinessRuleViolationException("No customer with with ID: " + id);
+
         log.info("Customer soft deleted with ID: {}", id);
     }
 
-    private Customer findDeletedCustomerById(Long id) {
-//        Customer customer = findActiveCustomerById(id);
-//        if (customer.isDeleted())
-//            throw new BusinessRuleViolationException("Customer already deleted with ID: " + id);
-
-        return customerRepo.findByIdInDeleted(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Customer already deleted with ID: " + id));
-    }
 
     public void restoreCustomer(Long id) {
-        Customer customer = findActiveCustomerById(id);
-
-        if (!customer.isDeleted()) {
-            throw new IllegalStateException("Customer is not deleted with ID: " + id);
+        Optional<Customer> customer = customerRepo.findById(id);
+        if (customer.isPresent()) {
+            log.warn("Customer not deleted customerId {}", id);
+            throw new BusinessRuleViolationException("Customer is not deleted with ID: " + id);
         }
+        Customer restoreCustomer = customerRepo.findByIdInDeleted(id)
+                .orElseThrow(() -> new ResourceNotFoundException("No Customer with ID: " + id));
 
-        customer.setDeleted(false);
-        customer.setDeletedAt(null);
+        restoreCustomer.setDeleted(false);
+        restoreCustomer.setDeletedAt(null);
 
-        customerRepo.save(customer);
-        log.info("User restored with ID: {}", id);
+        customerRepo.save(restoreCustomer);
+
+        log.info("Customer restored with customerId: {}", id);
     }
+
 
     @Transactional(readOnly = true)
     public List<CustomerResponseDtoList> getAllDeletedCustomers() {
@@ -105,15 +118,16 @@ public class CustomerService {
                 .collect(Collectors.toList());
     }
 
-    public void permanentDeleteUser(Long id) {
-        Customer customer = findActiveCustomerById(id);
 
-        if (!customer.isDeleted())
-            throw new IllegalStateException("User must be soft deleted first before permanent deletion");
+    public void permanentDeleteCustomer(Long id) {
+        Optional<Customer> customer = customerRepo.findById(id);
+
+        if (customer.isPresent())
+            throw new BusinessRuleViolationException("Customer must be soft deleted first before permanent deletion");
 
         int deletedCount = customerRepo.permanentlyDeleteById(id);
         if (deletedCount > 0) {
-            log.info("User permanently deleted with ID: {}", id);
+            log.info("Customer permanently deleted with ID: {}", id);
         } else {
             throw new BusinessRuleViolationException("Customer not found for permanent deletion with ID: " + id);
         }

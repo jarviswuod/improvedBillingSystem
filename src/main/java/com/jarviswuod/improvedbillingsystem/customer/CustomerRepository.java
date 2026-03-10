@@ -12,26 +12,21 @@ import java.util.Optional;
 @Repository
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
-    boolean existsByEmail(String email);
 
-    @Query("SELECT COUNT(u) > 0 FROM Customer u WHERE u.email = :email")
+    @Query(value = "SELECT COUNT(*) > 0 FROM customers WHERE email = :email", nativeQuery = true)
     boolean existsByEmailIncludingDeleted(@Param("email") String email);
 
-//    @Query("SELECT u FROM Customer u WHERE u.id = :id AND u.deleted = true")
+
     @Query(value = "SELECT * FROM customers WHERE id = :id AND is_deleted = true", nativeQuery = true)
     Optional<Customer> findByIdInDeleted(@Param("id") Long id);
 
 
-    //    @Query("SELECT u FROM Customer u WHERE u.deleted = true")
     @Query(value = "SELECT * FROM customers WHERE is_deleted = true", nativeQuery = true)
     List<Customer> findAllDeleted();
 
+
     @Modifying
-    @Query("DELETE FROM Customer u WHERE u.id = :id AND u.deleted = true")
+    @Query(value = "DELETE FROM customers WHERE id = :id AND is_deleted = true", nativeQuery = true)
     int permanentlyDeleteById(@Param("id") Long id);
-
-//    Customer findByIdExcludeDeleted(Long id);
-
-//    Customer findByIdIsDeleted(Long id);
 
 }

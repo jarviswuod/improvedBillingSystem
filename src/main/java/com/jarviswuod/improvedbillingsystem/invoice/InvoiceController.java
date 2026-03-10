@@ -15,34 +15,45 @@ public class InvoiceController {
 
     private final InvoiceService invoiceService;
 
+
     @PostMapping
     public ResponseEntity<String> createInvoice(
             @Valid @RequestBody InvoiceDto invoiceDto
     ) {
-        invoiceService.save(invoiceDto);
-        return new ResponseEntity<>("Invoice created Successfully", HttpStatus.CREATED);
+        invoiceService.createInvoice(invoiceDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body("Invoice created Successfully");
     }
+
 
     @GetMapping
     public ResponseEntity<List<InvoiceResponseDtoList>> findAllInvoices() {
-        return ResponseEntity
-                .ok(invoiceService.findAllInvoices());
+        return ResponseEntity.ok(invoiceService.findAllInvoices());
     }
 
-    @GetMapping("/{invoice-id}")
+
+    @GetMapping("/{id}")
     public ResponseEntity<InvoiceResponseDto> findInvoiceById(
-            @PathVariable("invoice-id") Long invoiceId
+            @PathVariable Long id
     ) {
-        return ResponseEntity
-                .ok(invoiceService.findInvoicesById(invoiceId));
+        return ResponseEntity.ok(invoiceService.findInvoicesById(id));
     }
 
-    @DeleteMapping("/{invoice-id}")
-    public ResponseEntity<String> deleteInvoice(
-            @PathVariable("invoice-id") Long invoiceId
+
+    @PutMapping("/{id}")
+    public ResponseEntity<String> updateInvoice(
+            @Valid @RequestBody InvoiceUpdateDto dto,
+            @PathVariable Long id
     ) {
-        invoiceService.deleteInvoiceById(invoiceId);
-        return ResponseEntity
-                .ok("Invoice deleted Successfully");
+        invoiceService.updateInvoice(dto, id);
+        return ResponseEntity.ok().body("Invoice updated Successfully");
+    }
+
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteInvoice(
+            @PathVariable Long id
+    ) {
+        invoiceService.deleteInvoiceById(id);
+        return ResponseEntity.ok("Invoice deleted Successfully");
     }
 }

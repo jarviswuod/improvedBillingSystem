@@ -56,7 +56,7 @@ public class GlobalExceptionHandler_ {
 
         ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
         pd.setTitle("Invalid format exception");
-        pd.setDetail(ex.getMessage());
+        pd.setDetail("Invalid format exception");
         pd.setInstance(URI.create(req.getRequestURI()));
         pd.setProperty("timestamp", Instant.now().toString());
 
@@ -69,7 +69,8 @@ public class GlobalExceptionHandler_ {
 
         Map<String, String> errors = new HashMap<>();
 
-        ex.getBindingResult().getFieldErrors()
+        ex.getBindingResult()
+                .getFieldErrors()
                 .forEach(e -> errors.put(e.getField(), e.getDefaultMessage()));
 
         log.warn("Validation error {}", errors);

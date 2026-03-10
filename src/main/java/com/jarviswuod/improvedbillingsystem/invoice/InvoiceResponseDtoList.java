@@ -2,11 +2,11 @@ package com.jarviswuod.improvedbillingsystem.invoice;
 
 import com.jarviswuod.improvedbillingsystem.customer.CustomerResponseDtoList;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 public record InvoiceResponseDtoList(
         Double amount,
-        LocalDateTime dueData,
+        LocalDate dueData,
         InvoiceStatus status,
         CustomerResponseDtoList customer
 ) {

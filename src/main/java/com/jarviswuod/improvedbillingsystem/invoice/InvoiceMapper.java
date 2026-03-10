@@ -5,7 +5,6 @@ import com.jarviswuod.improvedbillingsystem.customer.CustomerMapper;
 import com.jarviswuod.improvedbillingsystem.customer.CustomerService;
 import com.jarviswuod.improvedbillingsystem.payment.Payment;
 import com.jarviswuod.improvedbillingsystem.payment.PaymentInvoiceResponseDto;
-import com.jarviswuod.improvedbillingsystem.payment.PaymentMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +17,7 @@ public class InvoiceMapper {
 
     private final CustomerService customerService;
     private final CustomerMapper customerMapper;
+
 
     public Invoice toInvoice(InvoiceDto invoiceDto) {
 
@@ -35,6 +35,23 @@ public class InvoiceMapper {
         return invoice;
     }
 
+
+    public Invoice toInvoice(InvoiceUpdateDto dto, Invoice invoice) {
+
+        invoice.setDueData(dto.dueDate());
+        invoice.setAmount(dto.amount());
+        invoice.setBalance(dto.amount());
+
+        Long customerId = dto.customerId();
+        if (customerId != null) {
+            Customer customer = customerService.findActiveCustomerById(customerId);
+
+            invoice.setCustomer(customer);
+        }
+        return invoice;
+    }
+
+
     public InvoiceResponseDtoList toInvoiceResponseDtoList(Invoice invoice) {
 
         return new InvoiceResponseDtoList(
@@ -45,12 +62,14 @@ public class InvoiceMapper {
         );
     }
 
+
     public PaymentInvoiceResponseDto toPaymentInvoiceResponseDto(Payment payment) {
         return new PaymentInvoiceResponseDto(
                 payment.getAmount(),
                 payment.getPaymentDate()
         );
     }
+
 
     public InvoiceResponseDto toInvoiceResponseDto(Invoice invoice) {
 

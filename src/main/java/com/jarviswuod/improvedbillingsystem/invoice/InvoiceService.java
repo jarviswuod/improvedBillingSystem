@@ -3,24 +3,32 @@ package com.jarviswuod.improvedbillingsystem.invoice;
 import com.jarviswuod.improvedbillingsystem.exception.BusinessRuleViolationException;
 import com.jarviswuod.improvedbillingsystem.payment.Payment;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
+@Slf4j
 public class InvoiceService {
 
     private final InvoiceRepository invoiceRepo;
     private final InvoiceMapper invoiceMapper;
 
-    public void save(InvoiceDto invoiceDto) {
+
+    public void createInvoice(InvoiceDto invoiceDto) {
         Invoice invoice = invoiceMapper.toInvoice(invoiceDto);
 
+        log.info("Invoice created with invoiceId {}", invoice.getId());
         invoiceRepo.save(invoice);
     }
 
+
+    @Transactional(readOnly = true)
     public List<InvoiceResponseDtoList> findAllInvoices() {
         return invoiceRepo.findAll()
                 .stream()
@@ -28,27 +36,44 @@ public class InvoiceService {
                 .collect(Collectors.toList());
     }
 
-    public InvoiceResponseDto findInvoicesById(Long invoiceId) {
-        Invoice invoice = getInvoiceById(invoiceId);
+
+    @Transactional(readOnly = true)
+    public InvoiceResponseDto findInvoicesById(Long id) {
+        Invoice invoice = getInvoiceById(id);
+        log.info("Invoice retrieved {}", invoice.getId());
+
         return invoiceMapper.toInvoiceResponseDto(invoice);
     }
 
-    public Invoice getInvoiceById(Long invoiceId) {
-        return invoiceRepo.findById(invoiceId)
-                .orElseThrow(() -> new BusinessRuleViolationException("Invoice with id " + invoiceId + " does not exist."));
+
+    public Invoice getInvoiceById(Long id) {
+        return invoiceRepo.findById(id)
+                .orElseThrow(() -> new BusinessRuleViolationException("Invoice with id " + id + " does not exist."));
     }
 
-    public void deleteInvoiceById(Long invoiceId) {
-        Invoice invoice = getInvoiceById(invoiceId);
+
+    public void deleteInvoiceById(Long id) {
+        Invoice invoice = getInvoiceById(id);
         List<Payment> payments = invoice.getPayments();
 
-        if (payments.isEmpty())
-            invoiceRepo.deleteById(invoiceId);
-        else
+        if (payments.isEmpty()) {
+            invoiceRepo.deleteById(id);
+            log.info("Invoice deleted with invoiceId {}", id);
+        } else
             throw new BusinessRuleViolationException("An invoice with payments cannot be deleted");
+
+        log.info("Invoice deleted successfully {}", id);
     }
+
 
     public void updateInvoice(Invoice invoice) {
         invoiceRepo.save(invoice);
+        log.info("Invoice with invoiceId updated successfully {}", invoice.getId());
+    }
+
+
+    public void updateInvoice(InvoiceUpdateDto dto, Long id) {
+
+        updateInvoice(invoiceMapper.toInvoice(dto, getInvoiceById(id)));
     }
 }

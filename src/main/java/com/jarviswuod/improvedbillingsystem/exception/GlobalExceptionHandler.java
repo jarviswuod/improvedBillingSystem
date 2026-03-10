@@ -2,7 +2,6 @@ package com.jarviswuod.improvedbillingsystem.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.MDC;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -50,7 +49,7 @@ public class GlobalExceptionHandler {
                 .timestamp(Instant.now())
                 .status(HttpStatus.BAD_REQUEST.value())
                 .errorCode(ErrorCode.INVALID_FORMAT)
-                .message(ex.getMessage())
+                .message("Invalid format exception")
                 .path(request.getRequestURI())
                 .build();
 

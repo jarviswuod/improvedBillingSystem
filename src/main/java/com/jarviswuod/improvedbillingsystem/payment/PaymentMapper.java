@@ -11,6 +11,7 @@ public class PaymentMapper {
 
     private final InvoiceService invoiceService;
 
+
     public Payment toPayment(PaymentDto paymentDto) {
 
         Payment payment = new Payment();
@@ -27,6 +28,22 @@ public class PaymentMapper {
         return payment;
     }
 
+
+    public Payment toPayment(UpdatePaymentDto dto, Payment payment) {
+        payment.setAmount(dto.amount());
+        payment.setPaymentMethod(dto.paymentMethod());
+        payment.setPaymentDate(dto.paymentDate());
+        payment.setTransactionNumber(dto.transactionNumber());
+
+        Long invoiceId = dto.invoiceId();
+        if (invoiceId != null) {
+            Invoice invoice = invoiceService.getInvoiceById(invoiceId);
+            payment.setInvoice(invoice);
+        }
+        return payment;
+    }
+
+
     public PaymentResponseDtoList toPaymentResponseDtoList(Payment payment) {
 
         return new PaymentResponseDtoList(
@@ -39,6 +56,7 @@ public class PaymentMapper {
         );
     }
 
+
     public PaymentResponseDto toPaymentResponseDto(Payment payment) {
 
         return new PaymentResponseDto(
@@ -50,5 +68,4 @@ public class PaymentMapper {
                 payment.getInvoice().getId()
         );
     }
-
 }

@@ -16,5 +16,5 @@ public class ApiError {
     private String message;
     private String path;
     private String traceId;
-    private Map<String,String> fieldErrors;
+    private Map<String, String> fieldErrors;
 }

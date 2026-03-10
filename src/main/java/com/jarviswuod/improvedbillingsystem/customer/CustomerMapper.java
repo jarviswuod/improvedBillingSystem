@@ -15,6 +15,7 @@ public class CustomerMapper {
         return customer;
     }
 
+
     public CustomerResponseDto toCustomerResponseDto(Customer customer) {
 
         return new CustomerResponseDto(
@@ -25,12 +26,14 @@ public class CustomerMapper {
         );
     }
 
+
     public CustomerResponseDtoList toCustomerResponseDtoList(Customer customer) {
         return new CustomerResponseDtoList(
                 customer.getId(),
                 customer.getName()
         );
     }
+
 
     public void updateCustomer(CustomerDto dto, Customer customer) {
         customer.setName(dto.name());

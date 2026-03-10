@@ -7,7 +7,7 @@ import com.jarviswuod.improvedbillingsystem.utils.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
@@ -23,7 +23,7 @@ public class Invoice extends BaseEntity {
     private Double amount;
 
     @Column(nullable = false)
-    private LocalDateTime dueData;
+    private LocalDate dueData;
 
     private InvoiceStatus status;
 

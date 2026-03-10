@@ -15,17 +15,20 @@ public class CustomerController {
 
     private final CustomerService customerService;
 
+
     @PostMapping
     public ResponseEntity<CustomerResponseDto> createCustomer(
             @Valid @RequestBody CustomerDto customerDto
     ) {
-        return new ResponseEntity<>(customerService.createCustomer(customerDto), HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).body(customerService.createCustomer(customerDto));
     }
+
 
     @GetMapping
     public ResponseEntity<List<CustomerResponseDtoList>> getAllActiveCustomers() {
         return ResponseEntity.ok(customerService.getAllActiveCustomers());
     }
+
 
     @GetMapping("/{id}")
     public ResponseEntity<CustomerResponseDto> getCustomerById(
@@ -52,20 +55,23 @@ public class CustomerController {
         return ResponseEntity.noContent().build();
     }
 
+
     @PostMapping("/{id}/restore")
     public ResponseEntity<Void> restoreCustomer(@PathVariable Long id) {
         customerService.restoreCustomer(id);
         return ResponseEntity.ok().build();
     }
 
+
     @GetMapping("/deleted")
     public ResponseEntity<List<CustomerResponseDtoList>> getAllDeletedCustomers() {
         return ResponseEntity.ok(customerService.getAllDeletedCustomers());
     }
 
+
     @DeleteMapping("/{id}/permanent")
-    public ResponseEntity<Void> permanentDeleteUser(@PathVariable Long id) {
-        customerService.permanentDeleteUser(id);
+    public ResponseEntity<Void> permanentDeleteCustomer(@PathVariable Long id) {
+        customerService.permanentDeleteCustomer(id);
         return ResponseEntity.noContent().build();
     }
 }
