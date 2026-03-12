@@ -1,5 +1,8 @@
 package com.jarviswuod.improvedbillingsystem.payment;
 
+import com.jarviswuod.improvedbillingsystem.dashboard.CustomersDto;
+import com.jarviswuod.improvedbillingsystem.dashboard.BillingSummaryDto;
+import com.jarviswuod.improvedbillingsystem.dashboard.MonthlyRevenueDto;
 import com.jarviswuod.improvedbillingsystem.exception.BusinessRuleViolationException;
 import com.jarviswuod.improvedbillingsystem.exception.ResourceNotFoundException;
 import com.jarviswuod.improvedbillingsystem.invoice.Invoice;
@@ -10,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -98,5 +102,40 @@ public class PaymentService {
     public void deletePaymentById(Long id) {
         paymentRepo.deleteById(id);
         log.info("Payment successfully deleted paymentId {}", id);
+    }
+
+
+    public BillingSummaryDto getSummary(LocalDate startDate, LocalDate endDate, boolean customersFilter, boolean invoicesFilter, boolean paymentsFilter) {
+        dateValidation(startDate, endDate);
+
+//        return paymentRepo.getSummary();
+        return paymentRepo.getSummaryRange(startDate, endDate);
+    }
+
+
+    public List<CustomersDto> topCustomers(LocalDate startDate, LocalDate endDate, int limit) {
+
+        dateValidation(startDate, endDate);
+        return paymentRepo.findTopCustomers(startDate, endDate, limit);
+    }
+
+
+    private void dateValidation(LocalDate startDate, LocalDate endDate) {
+
+        if (startDate != null && endDate != null) {
+            if (startDate.isAfter(endDate))
+                throw new BusinessRuleViolationException("startDate must not be after endDate");
+
+            if (endDate.isAfter(LocalDate.now()))
+                throw new BusinessRuleViolationException("endDate must not be in the future");
+
+        }
+    }
+
+
+    public List<MonthlyRevenueDto> monthlyRevenue(LocalDate startDate, LocalDate endDate) {
+
+        dateValidation(startDate, endDate);
+        return paymentRepo.getMonthlyRevenue(startDate, endDate);
     }
 }

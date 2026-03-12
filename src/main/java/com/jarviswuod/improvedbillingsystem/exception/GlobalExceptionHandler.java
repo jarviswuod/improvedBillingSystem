@@ -122,7 +122,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
-
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleGeneral(
             Exception ex,

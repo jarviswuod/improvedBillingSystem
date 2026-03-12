@@ -56,4 +56,9 @@ public class InvoiceController {
         invoiceService.deleteInvoiceById(id);
         return ResponseEntity.ok("Invoice deleted Successfully");
     }
+
+    @GetMapping("/overdue")
+    public ResponseEntity<?> overDueInvoices() {
+        return null;
+    }
 }
