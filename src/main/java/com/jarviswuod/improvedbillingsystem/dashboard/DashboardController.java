@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -21,15 +22,28 @@ public class DashboardController {
     private final PaymentService paymentService;
 
 
+    /*
+        @GetMapping("/summary")
+        public ResponseEntity<BillingSummaryDto> getSummary(
+                @RequestParam(required = false) LocalDate startDate,
+                @RequestParam(required = false) LocalDate endDate,
+                @RequestParam(required = false) boolean customersFilter,
+                @RequestParam(required = false) boolean invoicesFilter,
+                @RequestParam(required = false) boolean paymentsFilter
+        ) {
+            return ResponseEntity.ok(paymentService.getSummary(startDate, endDate, customersFilter, invoicesFilter, paymentsFilter));
+        }
+
+
+     */
     @GetMapping("/summary")
     public ResponseEntity<BillingSummaryDto> getSummary(
             @RequestParam(required = false) LocalDate startDate,
             @RequestParam(required = false) LocalDate endDate,
-            @RequestParam(required = false) boolean customersFilter,
-            @RequestParam(required = false) boolean invoicesFilter,
-            @RequestParam(required = false) boolean paymentsFilter
+            @RequestParam(required = false) Instant start,
+            @RequestParam(required = false) Instant end
     ) {
-        return ResponseEntity.ok(paymentService.getSummary(startDate, endDate, customersFilter, invoicesFilter, paymentsFilter));
+        return ResponseEntity.ok(paymentService.getSummary(start, end, startDate, endDate));
     }
 
 
@@ -39,7 +53,7 @@ public class DashboardController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(defaultValue = "5") Integer limit
     ) {
-        return ResponseEntity.ok(paymentService.topCustomers(startDate, endDate, limit));
+        return ResponseEntity.ok(paymentService.findTopCustomers(startDate, endDate, limit));
     }
 
 
@@ -48,6 +62,6 @@ public class DashboardController {
             @RequestParam(required = false) LocalDate startDate,
             @RequestParam(required = false) LocalDate endDate
     ) {
-        return ResponseEntity.ok(paymentService.monthlyRevenue(startDate, endDate));
+        return ResponseEntity.ok(paymentService.findMonthlyRevenue(startDate, endDate));
     }
 }

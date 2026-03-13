@@ -1,7 +1,7 @@
 package com.jarviswuod.improvedbillingsystem.payment;
 
-import com.jarviswuod.improvedbillingsystem.dashboard.CustomersDto;
 import com.jarviswuod.improvedbillingsystem.dashboard.BillingSummaryDto;
+import com.jarviswuod.improvedbillingsystem.dashboard.CustomersDto;
 import com.jarviswuod.improvedbillingsystem.dashboard.MonthlyRevenueDto;
 import com.jarviswuod.improvedbillingsystem.exception.BusinessRuleViolationException;
 import com.jarviswuod.improvedbillingsystem.exception.ResourceNotFoundException;
@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -104,16 +105,21 @@ public class PaymentService {
         log.info("Payment successfully deleted paymentId {}", id);
     }
 
-
-    public BillingSummaryDto getSummary(LocalDate startDate, LocalDate endDate, boolean customersFilter, boolean invoicesFilter, boolean paymentsFilter) {
+    @Transactional(readOnly=true)
+    public BillingSummaryDto getSummary(
+            Instant start, Instant end,
+            LocalDate startDate, LocalDate endDate
+    ) {
         dateValidation(startDate, endDate);
 
-//        return paymentRepo.getSummary();
-        return paymentRepo.getSummaryRange(startDate, endDate);
+//        return paymentRepo.getSummary__1(start, end, startDate, endDate);
+//        return paymentRepo.getSummary__2(start, end, startDate, endDate);
+//        return paymentRepo.getSummary__3(start, end, startDate, endDate);
+        return paymentRepo.getSummary__4(start, end, startDate, endDate);
     }
 
-
-    public List<CustomersDto> topCustomers(LocalDate startDate, LocalDate endDate, int limit) {
+    @Transactional(readOnly=true)
+    public List<CustomersDto> findTopCustomers(LocalDate startDate, LocalDate endDate, int limit) {
 
         dateValidation(startDate, endDate);
         return paymentRepo.findTopCustomers(startDate, endDate, limit);
@@ -132,8 +138,8 @@ public class PaymentService {
         }
     }
 
-
-    public List<MonthlyRevenueDto> monthlyRevenue(LocalDate startDate, LocalDate endDate) {
+    @Transactional(readOnly=true)
+    public List<MonthlyRevenueDto> findMonthlyRevenue(LocalDate startDate, LocalDate endDate) {
 
         dateValidation(startDate, endDate);
         return paymentRepo.getMonthlyRevenue(startDate, endDate);
