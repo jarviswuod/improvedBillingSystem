@@ -1,5 +1,6 @@
 package com.jarviswuod.improvedbillingsystem.invoice;
 
+import com.jarviswuod.improvedbillingsystem.customer.CustomerService;
 import com.jarviswuod.improvedbillingsystem.exception.BusinessRuleViolationException;
 import com.jarviswuod.improvedbillingsystem.exception.ResourceNotFoundException;
 import com.jarviswuod.improvedbillingsystem.payment.Payment;
@@ -8,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,6 +21,7 @@ public class InvoiceService {
 
     private final InvoiceRepository invoiceRepo;
     private final InvoiceMapper invoiceMapper;
+    private final CustomerService customerService;
 
 
     public void createInvoice(InvoiceDto invoiceDto) {
@@ -76,5 +79,13 @@ public class InvoiceService {
     public void updateInvoice(InvoiceUpdateDto dto, Long id) {
 
         updateInvoice(invoiceMapper.toInvoice(dto, getInvoiceById(id)));
+    }
+
+
+    @Transactional(readOnly = true)
+    public List<OverdueInvoiceDto> overDueInvoices(Long customerId, LocalDate startDate, LocalDate endDate
+    ) {
+        customerService.findActiveCustomerById(customerId);
+        return invoiceRepo.overDueInvoices(customerId,startDate, endDate);
     }
 }

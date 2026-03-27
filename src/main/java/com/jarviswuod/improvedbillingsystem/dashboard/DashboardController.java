@@ -33,9 +33,8 @@ public class DashboardController {
         ) {
             return ResponseEntity.ok(paymentService.getSummary(startDate, endDate, customersFilter, invoicesFilter, paymentsFilter));
         }
+   */
 
-
-     */
     @GetMapping("/summary")
     public ResponseEntity<BillingSummaryDto> getSummary(
             @RequestParam(required = false) LocalDate startDate,
@@ -59,8 +58,8 @@ public class DashboardController {
 
     @GetMapping("/monthly-revenue")
     public ResponseEntity<List<MonthlyRevenueDto>> monthlyRevenue(
-            @RequestParam(required = false) LocalDate startDate,
-            @RequestParam(required = false) LocalDate endDate
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
     ) {
         return ResponseEntity.ok(paymentService.findMonthlyRevenue(startDate, endDate));
     }

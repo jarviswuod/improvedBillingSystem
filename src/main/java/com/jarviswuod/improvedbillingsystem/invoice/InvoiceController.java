@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -57,8 +58,13 @@ public class InvoiceController {
         return ResponseEntity.ok("Invoice deleted Successfully");
     }
 
+
     @GetMapping("/overdue")
-    public ResponseEntity<?> overDueInvoices() {
-        return null;
+    public ResponseEntity<List<OverdueInvoiceDto>> overDueInvoices(
+            @RequestParam(required = false) Long customerId,
+            @RequestParam(required = false) LocalDate startDate,
+            @RequestParam(required = false) LocalDate endDate
+    ) {
+        return ResponseEntity.ok(invoiceService.overDueInvoices(customerId, startDate, endDate));
     }
 }

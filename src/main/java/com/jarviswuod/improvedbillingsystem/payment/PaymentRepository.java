@@ -64,8 +64,10 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
                     (SELECT COALESCE(SUM(amount), 0) FROM payments WHERE payment_date BETWEEN :startDate AND :endDate)) as outstandingBalance
             """, nativeQuery = true)
     BillingSummaryDto getSummary__1(
-            @Param("start") Instant start, @Param("end") Instant end,
-            @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate
+            @Param("start") Instant start,
+            @Param("end") Instant end,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
     );
 
 
@@ -86,8 +88,10 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
             FROM stats
             """, nativeQuery = true)
     BillingSummaryDto getSummary__2(
-            @Param("start") Instant start, @Param("end") Instant end,
-            @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate
+            @Param("start") Instant start,
+            @Param("end") Instant end,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
     );
 
 
@@ -217,7 +221,11 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
             ORDER  BY totalPaid DESC
             LIMIT  :limit
             """, nativeQuery = true)
-    List<CustomersDto> findTopCustomers(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, @Param("limit") int limit);
+    List<CustomersDto> findTopCustomers(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("limit") int limit
+    );
 
 
     @Query(value = """
@@ -227,6 +235,9 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
                 GROUP BY month
                 ORDER BY month DESC
             """, nativeQuery = true)
-    List<MonthlyRevenueDto> getMonthlyRevenue(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+    List<MonthlyRevenueDto> getMonthlyRevenue(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
 
 }
