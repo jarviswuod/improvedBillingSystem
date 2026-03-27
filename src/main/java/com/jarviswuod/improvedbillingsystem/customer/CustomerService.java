@@ -98,13 +98,13 @@ public class CustomerService {
             log.warn("Customer not deleted customerId {}", id);
             throw new BusinessRuleViolationException("Customer is not deleted with ID: " + id);
         }
-        Customer restoreCustomer = customerRepo.findByIdInDeleted(id)
+        Customer restoredCustomer = customerRepo.findByIdInDeleted(id)
                 .orElseThrow(() -> new ResourceNotFoundException("No Customer with ID: " + id));
 
-        restoreCustomer.setDeleted(false);
-        restoreCustomer.setDeletedAt(null);
+        restoredCustomer.setDeleted(false);
+        restoredCustomer.setDeletedAt(null);
 
-        customerRepo.save(restoreCustomer);
+        customerRepo.save(restoredCustomer);
 
         log.info("Customer restored with customerId: {}", id);
     }

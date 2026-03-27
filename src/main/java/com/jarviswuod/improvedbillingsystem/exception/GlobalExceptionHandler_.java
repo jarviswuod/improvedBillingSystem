@@ -9,6 +9,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.NoHandlerFoundException;
 
 import java.net.URI;
 import java.time.Instant;
@@ -27,6 +28,21 @@ public class GlobalExceptionHandler_ {
         ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.CONFLICT);
         pd.setTitle("Business Rule Violation");
         pd.setDetail(ex.getMessage());
+        pd.setInstance(URI.create(req.getRequestURI()));
+        pd.setProperty("timestamp", Instant.now().toString());
+
+        return pd;
+    }
+
+
+    @ExceptionHandler(NoHandlerFoundException.class)
+    public ProblemDetail handleNotFound(NoHandlerFoundException ex, HttpServletRequest req) {
+
+        log.warn("No handler found for {} request to {}", ex.getHttpMethod(), ex.getRequestURL());
+
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        pd.setTitle("Resource Not Found");
+        pd.setDetail("No endpoint for " + ex.getHttpMethod() + " " + ex.getRequestURL());
         pd.setInstance(URI.create(req.getRequestURI()));
         pd.setProperty("timestamp", Instant.now().toString());
 

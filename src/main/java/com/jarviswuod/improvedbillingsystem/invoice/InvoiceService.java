@@ -1,6 +1,7 @@
 package com.jarviswuod.improvedbillingsystem.invoice;
 
 import com.jarviswuod.improvedbillingsystem.exception.BusinessRuleViolationException;
+import com.jarviswuod.improvedbillingsystem.exception.ResourceNotFoundException;
 import com.jarviswuod.improvedbillingsystem.payment.Payment;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,7 +49,7 @@ public class InvoiceService {
 
     public Invoice getInvoiceById(Long id) {
         return invoiceRepo.findById(id)
-                .orElseThrow(() -> new BusinessRuleViolationException("Invoice with id " + id + " does not exist."));
+                .orElseThrow(() -> new ResourceNotFoundException("No invoice with id" + id));
     }
 
 
