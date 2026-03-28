@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -50,17 +51,30 @@ public class PaymentService {
 
     private void invoiceStatusUpdate(Payment payment) {
         Invoice invoice = payment.getInvoice();
-        log.info("Updating invoice status {}, {}", invoice.getId(), invoice.getStatus());
-//
-//        invoice.setBalance(invoice.getBalance() - payment.getAmount());
-//        if (invoice.getBalance() < 0)
-//            throw new BusinessRuleViolationException("Payment must not exceed the invoice amount");
-//        else if (invoice.getBalance() == 0)
-//            invoice.setStatus(InvoiceStatus.PAID);
-//        else if (invoice.getBalance() > 0)
-//            invoice.setStatus(InvoiceStatus.PARTIALLY_PAID);
+
+        BigDecimal totalAmount = invoice.getAmount();
+
+        BigDecimal amountPaid = invoice.getPayments().stream()
+                .map(Payment::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (amountPaid.compareTo(totalAmount) > 0) {
+            throw new BusinessRuleViolationException("Payment must not exceed the invoice amount");
+        }
+
+        BigDecimal balance = totalAmount.subtract(amountPaid);
+        invoice.setBalance(balance);
+
+        if (amountPaid.compareTo(BigDecimal.ZERO) == 0) {
+            invoice.setStatus(InvoiceStatus.PENDING);
+        } else if (amountPaid.compareTo(totalAmount) == 0) {
+            invoice.setStatus(InvoiceStatus.PAID);
+        } else {
+            invoice.setStatus(InvoiceStatus.PARTIALLY_PAID);
+        }
 
         invoiceService.updateInvoice(invoice);
+
         log.info("Invoice status updated {}, {}", invoice.getId(), invoice.getStatus());
     }
 
@@ -105,7 +119,8 @@ public class PaymentService {
         log.info("Payment successfully deleted paymentId {}", id);
     }
 
-    @Transactional(readOnly=true)
+
+    @Transactional(readOnly = true)
     public BillingSummaryDto getSummary(
             Instant start, Instant end,
             LocalDate startDate, LocalDate endDate
@@ -118,7 +133,8 @@ public class PaymentService {
         return paymentRepo.getSummary__4(start, end, startDate, endDate);
     }
 
-    @Transactional(readOnly=true)
+
+    @Transactional(readOnly = true)
     public List<CustomersDto> findTopCustomers(LocalDate startDate, LocalDate endDate, int limit) {
 
         dateValidation(startDate, endDate);
@@ -138,7 +154,8 @@ public class PaymentService {
         }
     }
 
-    @Transactional(readOnly=true)
+
+    @Transactional(readOnly = true)
     public List<MonthlyRevenueDto> findMonthlyRevenue(LocalDate startDate, LocalDate endDate) {
 
         dateValidation(startDate, endDate);

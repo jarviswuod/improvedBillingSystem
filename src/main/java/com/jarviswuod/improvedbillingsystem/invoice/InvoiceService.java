@@ -44,6 +44,10 @@ public class InvoiceService {
     }
 
 
+    public List<Invoice> updateInvoiceStatus(){
+        return null;
+    }
+
     @Transactional(readOnly = true)
     public InvoiceResponseDto findInvoicesById(Long id) {
         Invoice invoice = getInvoiceById(id);
@@ -84,42 +88,14 @@ public class InvoiceService {
         updateInvoice(invoiceMapper.toInvoice(dto, getInvoiceById(id)));
     }
 
-/*
-
-    private void dateValidation(LocalDate startDate, LocalDate endDate) {
-
-        if (startDate != null && endDate != null) {
-            if (startDate.isAfter(endDate))
-                throw new BusinessRuleViolationException("startDate must not be after endDate");
-
-            if (endDate.isAfter(LocalDate.now()))
-                throw new BusinessRuleViolationException("endDate must not be in the future");
-
-        }
-    }
-
-
-    @Transactional(readOnly = true)
-    public List<OverdueInvoiceDto> overDueInvoices(Long customerId, LocalDate startDate, LocalDate endDate
-    ) {
-        customerService.findActiveCustomerById(customerId);
-        dateValidation(startDate, endDate);
-        return invoiceRepo.overDueInvoices(customerId, startDate, endDate);
-    }
-
- */
-
 
     private void validateDates(LocalDate startDate, LocalDate endDate) {
 
-        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+        if (startDate != null && endDate != null && startDate.isAfter(endDate))
             throw new BusinessRuleViolationException("startDate must not be after endDate");
-        }
 
-        if (endDate != null && endDate.isAfter(LocalDate.now())) {
+        if (endDate != null && endDate.isAfter(LocalDate.now()))
             throw new BusinessRuleViolationException("endDate must not be in the future");
-        }
-
 
     }
 
@@ -131,7 +107,7 @@ public class InvoiceService {
             LocalDate endDate
     ) {
         validateDates(startDate, endDate);
-
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
 
         Instant startCreatedAt = startDate != null
                 ? startDate.atStartOfDay(ZoneOffset.UTC).toInstant()
@@ -141,12 +117,8 @@ public class InvoiceService {
                 ? endDate.atTime(LocalTime.MAX).atZone(ZoneOffset.UTC).toInstant()
                 : null;
 
-        LocalDate today = LocalDate.now(ZoneOffset.UTC);
-
-
-        if (customerId != null) {
+        if (customerId != null)
             customerService.findActiveCustomerById(customerId);
-        }
 
         return invoiceRepo.findOverdueInvoices(customerId, today, startCreatedAt, endCreatedAt)
                 .stream()

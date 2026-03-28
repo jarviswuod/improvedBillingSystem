@@ -87,7 +87,6 @@ public class InvoiceMapper {
                 invoice.getStatus(),
                 customerMapper.toCustomerResponseDtoList(invoice.getCustomer()),
                 paymentInvoiceResponseDto
-
         );
     }
 
@@ -104,7 +103,6 @@ public class InvoiceMapper {
                 invoice.getDueDate(),
                 LocalDate.now()
         );
-
         return new OverdueInvoiceDto(
                 invoice.getId(),
                 invoice.getCustomer().getName(),
@@ -116,5 +114,4 @@ public class InvoiceMapper {
                 InvoiceStatus.OVERDUE
         );
     }
-
 }

@@ -19,8 +19,8 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
         LEFT JOIN i.payments p
         WHERE i.dueDate < :today
           AND (:customerId IS NULL OR i.customer.id = :customerId)
-          AND (CAST(:startCreatedAt AS DATE ) IS NULL OR i.createdAt >= CAST(:startCreatedAt AS DATE ) )
-          AND (CAST(:endCreatedAt AS DATE ) IS NULL OR i.createdAt <= CAST(:endCreatedAt AS DATE ))
+          AND i.createdAt >= COALESCE(:startCreatedAt, i.createdAt)
+          AND i.createdAt <= COALESCE(:endCreatedAt, i.createdAt)
         GROUP BY i
         HAVING COALESCE(SUM(p.amount), 0) < i.amount
     """)
@@ -29,5 +29,16 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
             @Param("today") LocalDate today,
             @Param("startCreatedAt") Instant startCreatedAt,
             @Param("endCreatedAt") Instant endCreatedAt
+   );
+
+
+
+    @Query("""
+    SELECT i FROM Invoice i
+    LEFT JOIN i.payments p
+    
+""")
+    List<Invoice> findAllInvoice(
+
     );
 }
