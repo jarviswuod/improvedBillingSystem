@@ -7,6 +7,7 @@ import com.jarviswuod.improvedbillingsystem.utils.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -20,14 +21,14 @@ import java.util.List;
 public class Invoice extends BaseEntity {
 
     @Column(nullable = false)
-    private Double amount;
+    private BigDecimal amount;
 
     @Column(nullable = false)
-    private LocalDate dueData;
+    private LocalDate dueDate;
 
     private InvoiceStatus status;
 
-    private Double balance;
+    private BigDecimal balance;
 
     @ManyToOne
     @JsonBackReference

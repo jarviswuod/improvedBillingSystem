@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Positive;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record PaymentDto(
@@ -15,7 +16,7 @@ public record PaymentDto(
 
         @NotNull(message = "Amount cannot be null")
         @Positive(message = "Amount must be positive and non-zero")
-        Double amount,
+        BigDecimal amount,
 
         @NotNull(message = "Due date cannot be null")
         @PastOrPresent(message = "A payment’s date must be on or before the current date (no future payments)")

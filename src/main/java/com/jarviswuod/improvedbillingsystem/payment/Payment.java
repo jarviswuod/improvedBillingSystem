@@ -6,6 +6,7 @@ import com.jarviswuod.improvedbillingsystem.utils.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @EqualsAndHashCode(callSuper = true)
@@ -18,7 +19,7 @@ import java.time.LocalDate;
 public class Payment extends BaseEntity {
 
     @Column(nullable = false)
-    private Double amount;
+    private BigDecimal amount;
 
     @Column(nullable = false)
     private LocalDate paymentDate;

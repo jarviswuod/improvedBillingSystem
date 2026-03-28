@@ -8,6 +8,9 @@ import com.jarviswuod.improvedbillingsystem.payment.PaymentInvoiceResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,7 +25,7 @@ public class InvoiceMapper {
     public Invoice toInvoice(InvoiceDto invoiceDto) {
 
         Invoice invoice = new Invoice();
-        invoice.setDueData(invoiceDto.dueDate());
+        invoice.setDueDate(invoiceDto.dueDate());
         invoice.setAmount(invoiceDto.amount());
         invoice.setBalance(invoiceDto.amount());
         invoice.setStatus(InvoiceStatus.PENDING);
@@ -38,7 +41,7 @@ public class InvoiceMapper {
 
     public Invoice toInvoice(InvoiceUpdateDto dto, Invoice invoice) {
 
-        invoice.setDueData(dto.dueDate());
+        invoice.setDueDate(dto.dueDate());
         invoice.setAmount(dto.amount());
         invoice.setBalance(dto.amount());
 
@@ -56,7 +59,7 @@ public class InvoiceMapper {
 
         return new InvoiceResponseDtoList(
                 invoice.getAmount(),
-                invoice.getDueData(),
+                invoice.getDueDate(),
                 invoice.getStatus(),
                 customerMapper.toCustomerResponseDtoList(invoice.getCustomer())
         );
@@ -80,11 +83,38 @@ public class InvoiceMapper {
 
         return new InvoiceResponseDto(
                 invoice.getAmount(),
-                invoice.getDueData(),
+                invoice.getDueDate(),
                 invoice.getStatus(),
                 customerMapper.toCustomerResponseDtoList(invoice.getCustomer()),
                 paymentInvoiceResponseDto
 
         );
     }
+
+
+    public OverdueInvoiceDto toOverdueInvoiceDto(Invoice invoice) {
+
+        BigDecimal amountPaid = invoice.getPayments().stream()
+                .map(Payment::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal balance = invoice.getAmount().subtract(amountPaid);
+
+        int daysOverdue = (int) ChronoUnit.DAYS.between(
+                invoice.getDueDate(),
+                LocalDate.now()
+        );
+
+        return new OverdueInvoiceDto(
+                invoice.getId(),
+                invoice.getCustomer().getName(),
+                invoice.getAmount(),
+                amountPaid,
+                balance,
+                invoice.getDueDate(),
+                daysOverdue,
+                InvoiceStatus.OVERDUE
+        );
+    }
+
 }

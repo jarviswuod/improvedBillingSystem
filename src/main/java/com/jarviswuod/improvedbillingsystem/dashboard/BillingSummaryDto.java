@@ -1,10 +1,12 @@
 package com.jarviswuod.improvedbillingsystem.dashboard;
 
+import java.math.BigDecimal;
+
 public record BillingSummaryDto(
         long totalCustomers,
         long totalInvoices,
-        double totalAmountInvoiced,
-        double totalAmountPaid,
-        double outstandingBalance
+        BigDecimal totalAmountInvoiced,
+        BigDecimal totalAmountPaid,
+        BigDecimal outstandingBalance
 ) {
 }

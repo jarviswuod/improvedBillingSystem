@@ -9,7 +9,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -81,11 +84,73 @@ public class InvoiceService {
         updateInvoice(invoiceMapper.toInvoice(dto, getInvoiceById(id)));
     }
 
+/*
+
+    private void dateValidation(LocalDate startDate, LocalDate endDate) {
+
+        if (startDate != null && endDate != null) {
+            if (startDate.isAfter(endDate))
+                throw new BusinessRuleViolationException("startDate must not be after endDate");
+
+            if (endDate.isAfter(LocalDate.now()))
+                throw new BusinessRuleViolationException("endDate must not be in the future");
+
+        }
+    }
+
 
     @Transactional(readOnly = true)
     public List<OverdueInvoiceDto> overDueInvoices(Long customerId, LocalDate startDate, LocalDate endDate
     ) {
         customerService.findActiveCustomerById(customerId);
-        return invoiceRepo.overDueInvoices(customerId,startDate, endDate);
+        dateValidation(startDate, endDate);
+        return invoiceRepo.overDueInvoices(customerId, startDate, endDate);
+    }
+
+ */
+
+
+    private void validateDates(LocalDate startDate, LocalDate endDate) {
+
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            throw new BusinessRuleViolationException("startDate must not be after endDate");
+        }
+
+        if (endDate != null && endDate.isAfter(LocalDate.now())) {
+            throw new BusinessRuleViolationException("endDate must not be in the future");
+        }
+
+
+    }
+
+
+    @Transactional(readOnly = true)
+    public List<OverdueInvoiceDto> getOverdueInvoices(
+            Long customerId,
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
+        validateDates(startDate, endDate);
+
+
+        Instant startCreatedAt = startDate != null
+                ? startDate.atStartOfDay(ZoneOffset.UTC).toInstant()
+                : null;
+
+        Instant endCreatedAt = endDate != null
+                ? endDate.atTime(LocalTime.MAX).atZone(ZoneOffset.UTC).toInstant()
+                : null;
+
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+
+
+        if (customerId != null) {
+            customerService.findActiveCustomerById(customerId);
+        }
+
+        return invoiceRepo.findOverdueInvoices(customerId, today, startCreatedAt, endCreatedAt)
+                .stream()
+                .map(invoiceMapper::toOverdueInvoiceDto)
+                .toList();
     }
 }

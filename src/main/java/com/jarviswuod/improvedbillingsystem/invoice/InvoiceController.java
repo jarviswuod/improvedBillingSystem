@@ -65,6 +65,7 @@ public class InvoiceController {
             @RequestParam(required = false) LocalDate startDate,
             @RequestParam(required = false) LocalDate endDate
     ) {
-        return ResponseEntity.ok(invoiceService.overDueInvoices(customerId, startDate, endDate));
+//        return ResponseEntity.ok(invoiceService.overDueInvoices(customerId, startDate, endDate));
+        return ResponseEntity.ok(invoiceService.getOverdueInvoices(customerId, startDate, endDate));
     }
 }

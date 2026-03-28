@@ -51,14 +51,14 @@ public class PaymentService {
     private void invoiceStatusUpdate(Payment payment) {
         Invoice invoice = payment.getInvoice();
         log.info("Updating invoice status {}, {}", invoice.getId(), invoice.getStatus());
-
-        invoice.setBalance(invoice.getBalance() - payment.getAmount());
-        if (invoice.getBalance() < 0)
-            throw new BusinessRuleViolationException("Payment must not exceed the invoice amount");
-        else if (invoice.getBalance() == 0)
-            invoice.setStatus(InvoiceStatus.PAID);
-        else if (invoice.getBalance() > 0)
-            invoice.setStatus(InvoiceStatus.PARTIALLY_PAID);
+//
+//        invoice.setBalance(invoice.getBalance() - payment.getAmount());
+//        if (invoice.getBalance() < 0)
+//            throw new BusinessRuleViolationException("Payment must not exceed the invoice amount");
+//        else if (invoice.getBalance() == 0)
+//            invoice.setStatus(InvoiceStatus.PAID);
+//        else if (invoice.getBalance() > 0)
+//            invoice.setStatus(InvoiceStatus.PARTIALLY_PAID);
 
         invoiceService.updateInvoice(invoice);
         log.info("Invoice status updated {}, {}", invoice.getId(), invoice.getStatus());

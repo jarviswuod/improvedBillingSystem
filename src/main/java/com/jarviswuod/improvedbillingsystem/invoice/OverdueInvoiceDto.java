@@ -1,15 +1,17 @@
 package com.jarviswuod.improvedbillingsystem.invoice;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record OverdueInvoiceDto(
         Long invoiceNumber,
         String customerName,
-        Double amount,
-        Double amountPaid,
-        Double balance,
+        BigDecimal amount,
+        BigDecimal amountPaid,
+        BigDecimal balance,
         LocalDate dueDate,
-        Integer daysOverdue,
-        Short status
+        int daysOverdue,
+        InvoiceStatus status
 ) {
+
 }
