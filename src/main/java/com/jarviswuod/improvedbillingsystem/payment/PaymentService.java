@@ -37,10 +37,12 @@ public class PaymentService {
         if (existingPayment != null)
             throw new BusinessRuleViolationException("Invalid Transaction Number");
 
-        Payment payment = paymentRepo.save(paymentMapper.toPayment(paymentDto));
-        invoiceStatusUpdate(payment);
+        Payment payment = paymentMapper.toPayment(paymentDto);
 
-        log.info("Payment created successfully with paymentId {}", payment.getId());
+        invoiceStatusUpdate(payment);
+        Payment savedPayment = paymentRepo.save(payment);
+
+        log.info("Payment created successfully with paymentId {}", savedPayment.getId());
     }
 
 
@@ -51,23 +53,19 @@ public class PaymentService {
 
     private void invoiceStatusUpdate(Payment payment) {
         Invoice invoice = payment.getInvoice();
-
         BigDecimal totalAmount = invoice.getAmount();
 
-        BigDecimal amountPaid = invoice.getPayments().stream()
+        BigDecimal existingPaid = invoice.getPayments().stream()
                 .map(Payment::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        if (amountPaid.compareTo(totalAmount) > 0) {
-            throw new BusinessRuleViolationException("Payment must not exceed the invoice amount");
+        BigDecimal newTotalPaid = existingPaid.add(payment.getAmount());
+
+        if (newTotalPaid.compareTo(totalAmount) > 0) {
+            throw new BusinessRuleViolationException("Payment would exceed invoice amount");
         }
 
-        BigDecimal balance = totalAmount.subtract(amountPaid);
-        invoice.setBalance(balance);
-
-        if (amountPaid.compareTo(BigDecimal.ZERO) == 0) {
-            invoice.setStatus(InvoiceStatus.PENDING);
-        } else if (amountPaid.compareTo(totalAmount) == 0) {
+        if (newTotalPaid.compareTo(totalAmount) <= 0) {
             invoice.setStatus(InvoiceStatus.PAID);
         } else {
             invoice.setStatus(InvoiceStatus.PARTIALLY_PAID);

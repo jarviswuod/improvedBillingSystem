@@ -28,8 +28,6 @@ public class Invoice extends BaseEntity {
 
     private InvoiceStatus status;
 
-    private BigDecimal balance;
-
     @ManyToOne
     @JsonBackReference
     @JoinColumn(name = "customer_id")

@@ -67,4 +67,32 @@ public class InvoiceController {
     ) {
         return ResponseEntity.ok(invoiceService.getOverdueInvoices(customerId, startDate, endDate));
     }
+
+
+    // -------------------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------------------------
+    @GetMapping("/fetchAllInvoicesWithAllPayments")
+    public List<Invoice> fetchAllInvoicesWithAllPayments() {
+        return invoiceService.fetchAllInvoicesWithAllPayments();
+    }
+
+
+    @GetMapping("/fetchAnInvoicesWithAllPayments")
+    public Invoice fetchAnInvoicesWithAllPayments() {
+        return invoiceService.fetchAnInvoicesWithAllPayments();
+    }
+
+
+    @GetMapping("/fetchSingleInvoicesWithSum")
+    public Invoice fetchSingleInvoicesWithSum() {
+        return invoiceService.fetchSingleInvoicesWithSum();
+    }
+
+
+    @GetMapping("/fetchAllInvoicesWithSum")
+    public Invoice fetchAllInvoicesWithSum() {
+        return invoiceService.fetchAllInvoicesWithSum();
+    }
 }

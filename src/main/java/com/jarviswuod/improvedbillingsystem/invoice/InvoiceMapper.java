@@ -27,7 +27,6 @@ public class InvoiceMapper {
         Invoice invoice = new Invoice();
         invoice.setDueDate(invoiceDto.dueDate());
         invoice.setAmount(invoiceDto.amount());
-        invoice.setBalance(invoiceDto.amount());
         invoice.setStatus(InvoiceStatus.PENDING);
 
         Long customerId = invoiceDto.customerId();
@@ -43,7 +42,6 @@ public class InvoiceMapper {
 
         invoice.setDueDate(dto.dueDate());
         invoice.setAmount(dto.amount());
-        invoice.setBalance(dto.amount());
 
         Long customerId = dto.customerId();
         if (customerId != null) {
