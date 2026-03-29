@@ -9,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -121,121 +120,5 @@ public class InvoiceService {
                 .stream()
                 .map(invoiceMapper::toOverdueInvoiceDto)
                 .toList();
-    }
-
-
-    // -------------------------------------------------------------------------------------------
-    // -------------------------------------------------------------------------------------------
-    // -------------------------------------------------------------------------------------------
-    // -------------------------------------------------------------------------------------------
-
-
-    public List<Invoice> fetchAllInvoicesWithAllPayments() {
-        return invoiceRepo.fetchAllInvoicesWithAllPayments()
-                .stream()
-                .map((el) -> {
-                    BigDecimal amountPaid = el.getPayments().stream()
-                            .map(Payment::getAmount)
-                            .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                    if (amountPaid.compareTo(BigDecimal.ZERO) == 0) {
-                        el.setStatus(InvoiceStatus.PENDING);
-                    } else if (amountPaid.compareTo(el.getAmount()) >= 0) {
-                        el.setStatus(InvoiceStatus.PAID);
-                    } else if (amountPaid.compareTo(el.getAmount()) <= 0) {
-                        el.setStatus(InvoiceStatus.PARTIALLY_PAID);
-                    }
-                    updateInvoice(el);
-                    return el;
-                })
-                .toList();
-    }
-
-
-    public Invoice fetchAnInvoicesWithAllPayments() {
-
-        invoiceRepo.findAll()
-                .stream()
-                .map((el) -> {
-
-                    Invoice invoice = invoiceRepo.fetchAnInvoicesWithAllPayments(el.getId())
-                            .orElseThrow(() -> new RuntimeException("Invoice not found"));
-
-                    BigDecimal amountPaid = invoice.getPayments().stream()
-                            .map(Payment::getAmount)
-                            .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                    if (amountPaid.compareTo(el.getAmount()) >= 0) {
-                        el.setStatus(InvoiceStatus.PENDING);
-                    } else if (amountPaid.compareTo(el.getAmount()) <= 0) {
-                        el.setStatus(InvoiceStatus.PENDING);
-                    }
-
-                    updateInvoice(invoice);
-                    return invoice;
-                }).toList();
-
-        return null;
-
-    }
-
-
-    public Invoice fetchSingleInvoicesWithSum() {
-        invoiceRepo.findAll()
-                .stream()
-                .map((el) -> {
-                    BigDecimal amountPaid = el.getPayments().stream()
-                            .map(Payment::getAmount)
-                            .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                    Object raw = invoiceRepo.fetchSingleInvoicesWithSum(el.getId())
-                            .orElseThrow(() -> new RuntimeException("Invoice not found"));
-
-                    Object[] result = (Object[]) raw;
-
-                    Invoice inv = (Invoice) result[0];
-                    BigDecimal totalPaid = (BigDecimal) result[1];
-
-                    if (totalPaid.compareTo(inv.getAmount()) >= 0) {
-                        inv.setStatus(InvoiceStatus.PENDING);
-                    } else if (totalPaid.compareTo(inv.getAmount()) <= 0) {
-                        inv.setStatus(InvoiceStatus.PENDING);
-                    }
-
-                    updateInvoice(inv);
-                    return inv;
-                }).toList();
-
-        return null;
-    }
-
-
-    public Invoice fetchAllInvoicesWithSum() {
-        invoiceRepo.fetchAllInvoicesWithSum()
-                .stream()
-                .map((el) -> {
-//                    BigDecimal amountPaid = el.getPayments().stream()
-//                            .map(Payment::getAmount)
-//                            .reduce(BigDecimal.ZERO, BigDecimal::add);
-//
-//                    Object raw = invoiceRepo.fetchSingleInvoicesWithSum(el.getId())
-//                            .orElseThrow(() -> new RuntimeException("Invoice not found"));
-
-                    Object[] result = (Object[]) el;
-
-                    Invoice inv = (Invoice) result[0];
-                    BigDecimal totalPaid = (BigDecimal) result[1];
-
-                    if (totalPaid.compareTo(inv.getAmount()) >= 0) {
-                        inv.setStatus(InvoiceStatus.PENDING);
-                    } else if (totalPaid.compareTo(inv.getAmount()) <= 0) {
-                        inv.setStatus(InvoiceStatus.PENDING);
-                    }
-
-                    updateInvoice(inv);
-                    return inv;
-                }).toList();
-
-        return null;
     }
 }
