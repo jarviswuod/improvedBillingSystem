@@ -67,5 +67,4 @@ public class InvoiceController {
     ) {
         return ResponseEntity.ok(invoiceService.getOverdueInvoices(customerId, startDate, endDate));
     }
-
 }

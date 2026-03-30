@@ -87,29 +87,4 @@ public class InvoiceMapper {
                 paymentInvoiceResponseDto
         );
     }
-
-
-    public OverdueInvoiceDto toOverdueInvoiceDto(Invoice invoice) {
-
-        BigDecimal amountPaid = invoice.getPayments().stream()
-                .map(Payment::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal balance = invoice.getAmount().subtract(amountPaid);
-
-        int daysOverdue = (int) ChronoUnit.DAYS.between(
-                invoice.getDueDate(),
-                LocalDate.now()
-        );
-        return new OverdueInvoiceDto(
-                invoice.getId(),
-                invoice.getCustomer().getName(),
-                invoice.getAmount(),
-                amountPaid,
-                balance,
-                invoice.getDueDate(),
-                daysOverdue,
-                InvoiceStatus.OVERDUE
-        );
-    }
 }

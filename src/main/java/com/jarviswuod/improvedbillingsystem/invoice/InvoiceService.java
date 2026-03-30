@@ -113,12 +113,13 @@ public class InvoiceService {
                 ? endDate.atTime(LocalTime.MAX).atZone(ZoneOffset.UTC).toInstant()
                 : null;
 
-        if (customerId != null)
+        if (customerId != null) {
             customerService.findActiveCustomerById(customerId);
+        }
 
-        return invoiceRepo.findOverdueInvoices(customerId, today, startCreatedAt, endCreatedAt)
-                .stream()
-                .map(invoiceMapper::toOverdueInvoiceDto)
-                .toList();
+
+        return invoiceRepo.findOverdueInvoices(
+                customerId, today, startCreatedAt, endCreatedAt
+        );
     }
 }

@@ -12,19 +12,26 @@ import java.util.List;
 @Repository
 public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
 
-
     @Query("""
-        SELECT i
+        SELECT new com.jarviswuod.improvedbillingsystem.invoice.OverdueInvoiceDto(
+            i.id,
+            i.customer.name,
+            i.amount,
+            COALESCE(SUM(p.amount), 0),
+            (i.amount - COALESCE(SUM(p.amount), 0)),
+            i.dueDate,
+            'OVERDUE'
+        )
         FROM Invoice i
         LEFT JOIN i.payments p
         WHERE i.dueDate < :today
           AND (:customerId IS NULL OR i.customer.id = :customerId)
           AND i.createdAt >= COALESCE(:startCreatedAt, i.createdAt)
           AND i.createdAt <= COALESCE(:endCreatedAt, i.createdAt)
-        GROUP BY i
+        GROUP BY i.id, i.customer.name, i.amount, i.dueDate
         HAVING COALESCE(SUM(p.amount), 0) < i.amount
     """)
-    List<Invoice> findOverdueInvoices(
+    List<OverdueInvoiceDto> findOverdueInvoices(
             @Param("customerId") Long customerId,
             @Param("today") LocalDate today,
             @Param("startCreatedAt") Instant startCreatedAt,
