@@ -1,15 +1,23 @@
 package com.jarviswuod.improvedbillingsystem.payment;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+@Schema(description = "Payment response returned to clients")
 public record PaymentResponseDto(
 
+        @Schema(description = "Payment id", example = "1")
         Long id,
+        @Schema(description = "Payment amount", example = "500.00")
         BigDecimal amount,
+        @Schema(description = "Payment method")
         PaymentMethod paymentMethod,
+        @Schema(description = "Transaction number", example = "TXN-123456")
         String transactionNumber,
+        @Schema(description = "Payment date", example = "2026-04-01")
         LocalDate paymentDate,
+        @Schema(description = "Associated invoice id", example = "10")
         Long invoiceId
 ) {
 }

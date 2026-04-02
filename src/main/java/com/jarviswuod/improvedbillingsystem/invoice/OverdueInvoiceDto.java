@@ -1,17 +1,27 @@
 package com.jarviswuod.improvedbillingsystem.invoice;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
 
+@Schema(description = "Overdue invoice projection (balance still outstanding)")
 public record OverdueInvoiceDto(
+        @Schema(description = "Invoice id", example = "1")
         Long invoiceNumber,
+        @Schema(description = "Customer name")
         String customerName,
+        @Schema(description = "Invoice total amount", example = "1500.00")
         BigDecimal amount,
+        @Schema(description = "Amount already paid", example = "500.00")
         BigDecimal amountPaid,
+        @Schema(description = "Outstanding balance = amount - amountPaid", example = "1000.00")
         BigDecimal balance,
+        @Schema(description = "Invoice due date", example = "2026-01-01")
         LocalDate dueDate,
+        @Schema(description = "Invoice status (OVERDUE)")
         InvoiceStatus status
 ) {
     public long getDaysOverdue() {
