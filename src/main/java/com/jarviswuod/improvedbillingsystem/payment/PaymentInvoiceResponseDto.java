@@ -8,6 +8,7 @@ import java.time.LocalDate;
 public record PaymentInvoiceResponseDto(
         @Schema(description = "Payment amount", example = "500.00")
         BigDecimal amount,
+
         @Schema(description = "Payment date", example = "2026-04-01")
         LocalDate paymentDate
 ) {

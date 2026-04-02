@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 public record MonthlyRevenueDto(
         @Schema(description = "Month key (YYYY-MM)", example = "2026-04")
         String month,
+
         @Schema(description = "Total amount paid in that month", example = "12000.00")
         BigDecimal total
 ) {

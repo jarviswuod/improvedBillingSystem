@@ -45,9 +45,7 @@ public class PaymentMapper {
 
 
     public PaymentResponseDtoList toPaymentResponseDtoList(Payment payment) {
-
         return new PaymentResponseDtoList(
-
                 payment.getAmount(),
                 payment.getPaymentMethod(),
                 payment.getTransactionNumber(),
@@ -58,7 +56,6 @@ public class PaymentMapper {
 
 
     public PaymentResponseDto toPaymentResponseDto(Payment payment) {
-
         return new PaymentResponseDto(
                 payment.getId(),
                 payment.getAmount(),

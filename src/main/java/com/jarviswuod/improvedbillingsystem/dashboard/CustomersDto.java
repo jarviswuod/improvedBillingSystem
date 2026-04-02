@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 public record CustomersDto(
         @Schema(description = "Customer name", example = "Ali Boual")
         String customerName,
+
         @Schema(description = "Total amount paid by the customer in the selected window", example = "8000.00")
         BigDecimal totalPaid
 ) {

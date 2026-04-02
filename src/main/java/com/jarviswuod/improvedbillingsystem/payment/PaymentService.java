@@ -125,10 +125,7 @@ public class PaymentService {
     ) {
         dateValidation(startDate, endDate);
 
-//        return paymentRepo.getSummary__1(start, end, startDate, endDate);
-//        return paymentRepo.getSummary__2(start, end, startDate, endDate);
-//        return paymentRepo.getSummary__3(start, end, startDate, endDate);
-        return paymentRepo.getSummary__4(start, end, startDate, endDate);
+        return paymentRepo.getSummary(start, end, startDate, endDate);
     }
 
 

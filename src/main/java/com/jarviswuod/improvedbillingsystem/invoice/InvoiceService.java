@@ -117,7 +117,6 @@ public class InvoiceService {
             customerService.findActiveCustomerById(customerId);
         }
 
-
         return invoiceRepo.findOverdueInvoices(
                 customerId, today, startCreatedAt, endCreatedAt
         );

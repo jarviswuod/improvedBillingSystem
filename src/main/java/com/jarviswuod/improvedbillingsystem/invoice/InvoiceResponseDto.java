@@ -12,12 +12,16 @@ import java.util.List;
 public record InvoiceResponseDto(
         @Schema(description = "Invoice total amount", example = "1500.00")
         BigDecimal amount,
+
         @Schema(description = "Invoice due date", example = "2026-12-31")
         LocalDate dueData,
+
         @Schema(description = "Invoice status", example = "PENDING")
         InvoiceStatus status,
+
         @Schema(description = "Invoice customer")
         CustomerResponseDtoList customer,
+
         @Schema(description = "Payments recorded for the invoice")
         List<PaymentInvoiceResponseDto> payments
 ) {

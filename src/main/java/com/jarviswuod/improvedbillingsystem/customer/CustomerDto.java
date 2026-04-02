@@ -10,6 +10,7 @@ public record CustomerDto(
         @NotBlank(message = "Name should not be empty")
         @Schema(description = "Customer full name", example = "Ali Boual")
         String name,
+
         @NotBlank(message = "Email should not be empty")
         @Email(message = "Email is invalid")
         @Schema(description = "Customer email address", example = "user@example.com")

@@ -29,19 +29,6 @@ public class DashboardController {
     private final PaymentService paymentService;
 
 
-    /*
-        @GetMapping("/summary")
-        public ResponseEntity<BillingSummaryDto> getSummary(
-                @RequestParam(required = false) LocalDate startDate,
-                @RequestParam(required = false) LocalDate endDate,
-                @RequestParam(required = false) boolean customersFilter,
-                @RequestParam(required = false) boolean invoicesFilter,
-                @RequestParam(required = false) boolean paymentsFilter
-        ) {
-            return ResponseEntity.ok(paymentService.getSummary(startDate, endDate, customersFilter, invoicesFilter, paymentsFilter));
-        }
-   */
-
     @GetMapping("/summary")
     @Operation(summary = "Billing summary", description = "Returns high-level billing KPIs for a date range.")
     @ApiResponses({

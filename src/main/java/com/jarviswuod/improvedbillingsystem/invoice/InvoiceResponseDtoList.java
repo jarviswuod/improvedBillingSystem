@@ -10,10 +10,13 @@ import java.time.LocalDate;
 public record InvoiceResponseDtoList(
         @Schema(description = "Invoice total amount", example = "1500.00")
         BigDecimal amount,
+
         @Schema(description = "Invoice due date", example = "2026-12-31")
         LocalDate dueData,
+
         @Schema(description = "Invoice status", example = "PENDING")
         InvoiceStatus status,
+
         @Schema(description = "Invoice customer (compact)")
         CustomerResponseDtoList customer
 ) {
