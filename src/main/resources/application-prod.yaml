@@ -6,8 +6,8 @@ spring:
       on-profile: prod
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/billing
-    username: postgres
+    url: jdbc:postgresql://postgres:5432/billing
+    username: username
     password: password
     driver-class-name: org.postgresql.Driver
 

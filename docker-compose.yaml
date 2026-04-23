@@ -1,0 +1,39 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: postgres-sql
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: username
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: billing
+    ports:
+      - "5434:5432"
+    volumes:
+      - billing_volume:/var/lib/postgresql/data
+    networks:
+      - billing-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U username -d billing"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    image: jarviswuod/improved-billing:latest
+    container_name: billing-app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    networks:
+      - billing-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+networks:
+  billing-network:
+    driver: bridge
+
+volumes:
+  billing_volume:
