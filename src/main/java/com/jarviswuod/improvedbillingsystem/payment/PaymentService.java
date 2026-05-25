@@ -1,5 +1,14 @@
 package com.jarviswuod.improvedbillingsystem.payment;
 
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.jarviswuod.improvedbillingsystem.dashboard.BillingSummaryDto;
 import com.jarviswuod.improvedbillingsystem.dashboard.CustomersDto;
 import com.jarviswuod.improvedbillingsystem.dashboard.MonthlyRevenueDto;
@@ -8,16 +17,9 @@ import com.jarviswuod.improvedbillingsystem.exception.ResourceNotFoundException;
 import com.jarviswuod.improvedbillingsystem.invoice.Invoice;
 import com.jarviswuod.improvedbillingsystem.invoice.InvoiceService;
 import com.jarviswuod.improvedbillingsystem.invoice.InvoiceStatus;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +30,6 @@ public class PaymentService {
     private final PaymentRepository paymentRepo;
     private final PaymentMapper paymentMapper;
     private final InvoiceService invoiceService;
-
 
     public void createPayment(PaymentDto paymentDto) {
 
@@ -45,11 +46,9 @@ public class PaymentService {
         log.info("Payment created successfully with paymentId {}", savedPayment.getId());
     }
 
-
     private Payment findByTransactionNumber(String transactionNumber) {
         return paymentRepo.findByTransactionNumber(transactionNumber);
     }
-
 
     private void invoiceStatusUpdate(Payment payment) {
         Invoice invoice = payment.getInvoice();
@@ -65,7 +64,7 @@ public class PaymentService {
             throw new BusinessRuleViolationException("Payment would exceed invoice amount");
         }
 
-        if (newTotalPaid.compareTo(totalAmount) <= 0) {
+        if (newTotalPaid.compareTo(totalAmount) == 0) {
             invoice.setStatus(InvoiceStatus.PAID);
         } else {
             invoice.setStatus(InvoiceStatus.PARTIALLY_PAID);
@@ -76,7 +75,6 @@ public class PaymentService {
         log.info("Invoice status updated {}, {}", invoice.getId(), invoice.getStatus());
     }
 
-
     @Transactional(readOnly = true)
     public List<PaymentResponseDtoList> findAllPayments() {
 
@@ -86,12 +84,10 @@ public class PaymentService {
                 .collect(Collectors.toList());
     }
 
-
     private Payment getPaymentById(Long id) {
         return paymentRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("No payment with id " + id));
     }
-
 
     @Transactional(readOnly = true)
     public PaymentResponseDto findPaymentById(Long id) {
@@ -102,7 +98,6 @@ public class PaymentService {
         return dto;
     }
 
-
     public void updatePayment(UpdatePaymentDto dto, Long id) {
         Payment payment = getPaymentById(id);
 
@@ -111,23 +106,19 @@ public class PaymentService {
         log.info("Payment updated successfully  paymentId {}", id);
     }
 
-
     public void deletePaymentById(Long id) {
         paymentRepo.deleteById(id);
         log.info("Payment successfully deleted paymentId {}", id);
     }
 
-
     @Transactional(readOnly = true)
     public BillingSummaryDto getSummary(
             Instant start, Instant end,
-            LocalDate startDate, LocalDate endDate
-    ) {
+            LocalDate startDate, LocalDate endDate) {
         dateValidation(startDate, endDate);
 
         return paymentRepo.getSummary(start, end, startDate, endDate);
     }
-
 
     @Transactional(readOnly = true)
     public List<CustomersDto> findTopCustomers(LocalDate startDate, LocalDate endDate, int limit) {
@@ -135,7 +126,6 @@ public class PaymentService {
         dateValidation(startDate, endDate);
         return paymentRepo.findTopCustomers(startDate, endDate, limit);
     }
-
 
     private void dateValidation(LocalDate startDate, LocalDate endDate) {
 
@@ -148,7 +138,6 @@ public class PaymentService {
 
         }
     }
-
 
     @Transactional(readOnly = true)
     public List<MonthlyRevenueDto> findMonthlyRevenue(LocalDate startDate, LocalDate endDate) {

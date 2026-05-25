@@ -6,7 +6,7 @@ spring:
       on-profile: default
 
   datasource:
-    url: jdbc:postgresql://postgres:5432/billing
+    url: jdbc:postgresql://localhost:5438/billing
     username: username
     password: password
     driver-class-name: org.postgresql.Driver
@@ -19,7 +19,7 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
 
 server:
-  port: 8080
+  port: 8081
 
 logging:
   level:
