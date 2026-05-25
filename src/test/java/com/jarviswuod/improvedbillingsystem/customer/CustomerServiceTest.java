@@ -133,6 +133,30 @@ class CustomerServiceTest {
     }
 
     @Test
+    void findCustomerByIdShouldReturnMappedCustomer() {
+        // Given
+        long id = 1L;
+        Customer customer = Customer.builder()
+                .name("Jarvis")
+                .email("jarvis@example.com")
+                .phone("+254712345678")
+                .build();
+        customer.setId(id);
+        CustomerResponseDto expectedResponse =
+                new CustomerResponseDto(id, customer.getName(), customer.getEmail(), customer.getPhone());
+
+        when(customerRepo.findById(id)).thenReturn(Optional.of(customer));
+        when(customerMapper.toCustomerResponseDto(customer)).thenReturn(expectedResponse);
+
+        // When
+        CustomerResponseDto response = customerService.findCustomerById(id);
+
+        // Then
+        assertEquals(expectedResponse, response);
+        verify(customerMapper).toCustomerResponseDto(customer);
+    }
+
+    @Test
     void updateCustomerShouldSaveMappedChanges() {
         // Given
         long id = 1L;
@@ -158,6 +182,31 @@ class CustomerServiceTest {
         assertEquals(expectedResponse, response);
         verify(customerMapper).updateCustomer(dto, existingCustomer);
         verify(customerRepo).save(existingCustomer);
+    }
+
+    @Test
+    void updateCustomerShouldThrowWhenEmailAlreadyExists() {
+        // Given
+        long id = 1L;
+        CustomerDto dto = new CustomerDto("New Name", "existing@example.com", "+254798765432");
+        Customer existingCustomer = Customer.builder()
+                .name("Old Name")
+                .email("old@example.com")
+                .phone("+254712345678")
+                .build();
+
+        when(customerRepo.findById(id)).thenReturn(Optional.of(existingCustomer));
+        when(customerRepo.existsByEmailIncludingDeleted(dto.email())).thenReturn(true);
+
+        // When & Then
+        BusinessRuleViolationException exp = assertThrows(
+                BusinessRuleViolationException.class,
+                () -> customerService.updateCustomer(id, dto)
+        );
+
+        assertEquals("Account with email address existing@example.com already exists", exp.getMessage());
+        verify(customerMapper, never()).updateCustomer(any(), any());
+        verify(customerRepo, never()).save(any());
     }
 
     @Test
@@ -197,6 +246,23 @@ class CustomerServiceTest {
     }
 
     @Test
+    void softDeleteCustomerShouldThrowWhenCustomerDoesNotExist() {
+        // Given
+        long id = 1L;
+        when(customerRepo.findById(id)).thenReturn(Optional.empty());
+        when(customerRepo.findByIdInDeleted(id)).thenReturn(Optional.empty());
+
+        // When & Then
+        BusinessRuleViolationException exp = assertThrows(
+                BusinessRuleViolationException.class,
+                () -> customerService.softDeleteCustomer(id)
+        );
+
+        assertEquals("No customer with with ID: 1", exp.getMessage());
+        verify(customerRepo, never()).deleteById(id);
+    }
+
+    @Test
     void restoreCustomerShouldSaveDeletedCustomerAsActive() {
         // Given
         long id = 1L;
@@ -220,6 +286,61 @@ class CustomerServiceTest {
     }
 
     @Test
+    void restoreCustomerShouldThrowWhenCustomerIsAlreadyActive() {
+        // Given
+        long id = 1L;
+        Customer activeCustomer = Customer.builder().name("Jarvis").email("jarvis@example.com").build();
+        when(customerRepo.findById(id)).thenReturn(Optional.of(activeCustomer));
+
+        // When & Then
+        BusinessRuleViolationException exp = assertThrows(
+                BusinessRuleViolationException.class,
+                () -> customerService.restoreCustomer(id)
+        );
+
+        assertEquals("Customer is not deleted with ID: 1", exp.getMessage());
+        verify(customerRepo, never()).findByIdInDeleted(id);
+        verify(customerRepo, never()).save(any());
+    }
+
+    @Test
+    void restoreCustomerShouldThrowWhenDeletedCustomerDoesNotExist() {
+        // Given
+        long id = 1L;
+        when(customerRepo.findById(id)).thenReturn(Optional.empty());
+        when(customerRepo.findByIdInDeleted(id)).thenReturn(Optional.empty());
+
+        // When & Then
+        ResourceNotFoundException exp = assertThrows(
+                ResourceNotFoundException.class,
+                () -> customerService.restoreCustomer(id)
+        );
+
+        assertEquals("No Customer with ID: 1", exp.getMessage());
+        verify(customerRepo, never()).save(any());
+    }
+
+    @Test
+    void getAllDeletedCustomersShouldReturnMappedDeletedCustomers() {
+        // Given
+        Customer deletedCustomer = Customer.builder()
+                .name("Jarvis")
+                .email("jarvis@example.com")
+                .build();
+        deletedCustomer.setId(1L);
+        CustomerResponseDtoList expectedResponse = new CustomerResponseDtoList(1L, "Jarvis");
+
+        when(customerRepo.findAllDeleted()).thenReturn(List.of(deletedCustomer));
+        when(customerMapper.toCustomerResponseDtoList(deletedCustomer)).thenReturn(expectedResponse);
+
+        // When
+        List<CustomerResponseDtoList> response = customerService.getAllDeletedCustomers();
+
+        // Then
+        assertThat(response).containsExactly(expectedResponse);
+    }
+
+    @Test
     void permanentDeleteCustomerShouldDeleteOnlySoftDeletedCustomer() {
         // Given
         long id = 1L;
@@ -231,5 +352,38 @@ class CustomerServiceTest {
 
         // Then
         verify(customerRepo).permanentlyDeleteById(id);
+    }
+
+    @Test
+    void permanentDeleteCustomerShouldThrowWhenCustomerIsActive() {
+        // Given
+        long id = 1L;
+        Customer activeCustomer = Customer.builder().name("Jarvis").email("jarvis@example.com").build();
+        when(customerRepo.findById(id)).thenReturn(Optional.of(activeCustomer));
+
+        // When & Then
+        BusinessRuleViolationException exp = assertThrows(
+                BusinessRuleViolationException.class,
+                () -> customerService.permanentDeleteCustomer(id)
+        );
+
+        assertEquals("Customer must be soft deleted first before permanent deletion", exp.getMessage());
+        verify(customerRepo, never()).permanentlyDeleteById(id);
+    }
+
+    @Test
+    void permanentDeleteCustomerShouldThrowWhenDeletedCustomerDoesNotExist() {
+        // Given
+        long id = 1L;
+        when(customerRepo.findById(id)).thenReturn(Optional.empty());
+        when(customerRepo.permanentlyDeleteById(id)).thenReturn(0);
+
+        // When & Then
+        BusinessRuleViolationException exp = assertThrows(
+                BusinessRuleViolationException.class,
+                () -> customerService.permanentDeleteCustomer(id)
+        );
+
+        assertEquals("Customer not found for permanent deletion with ID: 1", exp.getMessage());
     }
 }

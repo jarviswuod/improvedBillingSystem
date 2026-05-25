@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -21,6 +22,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -102,6 +105,31 @@ class InvoiceServiceTest {
         // Then
         assertEquals(expectedResponse, responseDto);
         verify(invoiceRepo).findById(id);
+    }
+
+    @Test
+    void findAllInvoicesShouldReturnMappedInvoices() {
+        // Given
+        Invoice invoice = Invoice.builder()
+                .amount(BigDecimal.valueOf(1500))
+                .dueDate(LocalDate.now().plusDays(30))
+                .status(InvoiceStatus.PENDING)
+                .build();
+        InvoiceResponseDtoList expectedResponse = new InvoiceResponseDtoList(
+                invoice.getAmount(),
+                invoice.getDueDate(),
+                invoice.getStatus(),
+                null
+        );
+
+        when(invoiceRepo.findAll()).thenReturn(List.of(invoice));
+        when(invoiceMapper.toInvoiceResponseDtoList(invoice)).thenReturn(expectedResponse);
+
+        // When
+        List<InvoiceResponseDtoList> response = invoiceService.findAllInvoices();
+
+        // Then
+        assertThat(response).containsExactly(expectedResponse);
     }
 
     @Test
@@ -192,6 +220,26 @@ class InvoiceServiceTest {
     }
 
     @Test
+    void updateInvoiceShouldSaveInvoiceEntityDirectly() {
+        // Given
+        Invoice invoice = Invoice.builder()
+                .amount(BigDecimal.valueOf(1500))
+                .dueDate(LocalDate.now().plusDays(30))
+                .status(InvoiceStatus.PENDING)
+                .build();
+        invoice.setId(1L);
+
+        when(invoiceRepo.save(invoice)).thenReturn(invoice);
+
+        // When
+        invoiceService.updateInvoice(invoice);
+
+        // Then
+        verify(invoiceRepo).save(invoiceCaptor.capture());
+        assertEquals(invoice, invoiceCaptor.getValue());
+    }
+
+    @Test
     void getOverdueInvoicesShouldRejectInvalidDateRange() {
         // Given
         LocalDate startDate = LocalDate.now();
@@ -204,6 +252,22 @@ class InvoiceServiceTest {
         );
 
         assertEquals("startDate must not be after endDate", exp.getMessage());
+        verify(invoiceRepo, never()).findOverdueInvoices(any(), any(), any(), any());
+    }
+
+    @Test
+    void getOverdueInvoicesShouldRejectFutureEndDate() {
+        // Given
+        LocalDate startDate = LocalDate.now().minusDays(1);
+        LocalDate endDate = LocalDate.now().plusDays(1);
+
+        // When & Then
+        BusinessRuleViolationException exp = assertThrows(
+                BusinessRuleViolationException.class,
+                () -> invoiceService.getOverdueInvoices(null, startDate, endDate)
+        );
+
+        assertEquals("endDate must not be in the future", exp.getMessage());
         verify(invoiceRepo, never()).findOverdueInvoices(any(), any(), any(), any());
     }
 
@@ -222,5 +286,96 @@ class InvoiceServiceTest {
         // Then
         assertThat(response).isEmpty();
         verify(customerService).findActiveCustomerById(customerId);
+    }
+
+    @Test
+    void getOverdueInvoicesShouldAllowNullCustomerAndNullDates() {
+        // Given
+        when(invoiceRepo.findOverdueInvoices(any(), any(), isNull(), isNull())).thenReturn(List.of());
+
+        // When
+        List<OverdueInvoiceDto> response = invoiceService.getOverdueInvoices(null, null, null);
+
+        // Then
+        assertThat(response).isEmpty();
+        verify(customerService, never()).findActiveCustomerById(any());
+        verify(invoiceRepo).findOverdueInvoices(isNull(), any(), isNull(), isNull());
+    }
+
+    @Test
+    void getOverdueInvoicesShouldConvertStartDateWhenOnlyStartDateIsProvided() {
+        // Given
+        LocalDate startDate = LocalDate.now().minusDays(10);
+        ArgumentCaptor<Instant> startCreatedAtCaptor = ArgumentCaptor.forClass(Instant.class);
+
+        when(invoiceRepo.findOverdueInvoices(any(), any(), any(), isNull())).thenReturn(List.of());
+
+        // When
+        List<OverdueInvoiceDto> response = invoiceService.getOverdueInvoices(null, startDate, null);
+
+        // Then
+        assertThat(response).isEmpty();
+        verify(invoiceRepo).findOverdueInvoices(
+                isNull(),
+                any(),
+                startCreatedAtCaptor.capture(),
+                isNull()
+        );
+        assertEquals(startDate.atStartOfDay(java.time.ZoneOffset.UTC).toInstant(), startCreatedAtCaptor.getValue());
+    }
+
+    @Test
+    void getOverdueInvoicesShouldConvertEndDateWhenOnlyEndDateIsProvided() {
+        // Given
+        LocalDate endDate = LocalDate.now().minusDays(1);
+        ArgumentCaptor<Instant> endCreatedAtCaptor = ArgumentCaptor.forClass(Instant.class);
+
+        when(invoiceRepo.findOverdueInvoices(any(), any(), isNull(), any())).thenReturn(List.of());
+
+        // When
+        List<OverdueInvoiceDto> response = invoiceService.getOverdueInvoices(null, null, endDate);
+
+        // Then
+        assertThat(response).isEmpty();
+        verify(invoiceRepo).findOverdueInvoices(
+                isNull(),
+                any(),
+                isNull(),
+                endCreatedAtCaptor.capture()
+        );
+        assertEquals(
+                endDate.atTime(java.time.LocalTime.MAX).atZone(java.time.ZoneOffset.UTC).toInstant(),
+                endCreatedAtCaptor.getValue()
+        );
+    }
+
+    @Test
+    void getOverdueInvoicesShouldPassConvertedDatesAndCustomerId() {
+        // Given
+        long customerId = 1L;
+        LocalDate startDate = LocalDate.now().minusDays(10);
+        LocalDate endDate = LocalDate.now().minusDays(1);
+        ArgumentCaptor<Instant> startCreatedAtCaptor = ArgumentCaptor.forClass(Instant.class);
+        ArgumentCaptor<Instant> endCreatedAtCaptor = ArgumentCaptor.forClass(Instant.class);
+
+        when(invoiceRepo.findOverdueInvoices(eq(customerId), any(), any(), any())).thenReturn(List.of());
+
+        // When
+        List<OverdueInvoiceDto> response = invoiceService.getOverdueInvoices(customerId, startDate, endDate);
+
+        // Then
+        assertThat(response).isEmpty();
+        verify(customerService).findActiveCustomerById(customerId);
+        verify(invoiceRepo).findOverdueInvoices(
+                eq(customerId),
+                any(),
+                startCreatedAtCaptor.capture(),
+                endCreatedAtCaptor.capture()
+        );
+        assertEquals(startDate.atStartOfDay(java.time.ZoneOffset.UTC).toInstant(), startCreatedAtCaptor.getValue());
+        assertEquals(
+                endDate.atTime(java.time.LocalTime.MAX).atZone(java.time.ZoneOffset.UTC).toInstant(),
+                endCreatedAtCaptor.getValue()
+        );
     }
 }
