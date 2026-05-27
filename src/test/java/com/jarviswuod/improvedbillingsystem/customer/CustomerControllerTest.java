@@ -11,9 +11,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class CustomerControllerTest {
 
@@ -22,11 +20,13 @@ class CustomerControllerTest {
     @Mock
     private CustomerService customerService;
 
+
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
         customerController = new CustomerController(customerService);
     }
+
 
     @Test
     void createCustomerShouldReturnCreatedCustomer() {
@@ -35,7 +35,8 @@ class CustomerControllerTest {
         CustomerResponseDto expectedResponse =
                 new CustomerResponseDto(1L, dto.name(), dto.email(), dto.phone());
 
-        when(customerService.createCustomer(dto)).thenReturn(expectedResponse);
+        when(customerService.createCustomer(dto))
+                .thenReturn(expectedResponse);
 
         // When
         ResponseEntity<CustomerResponseDto> response = customerController.createCustomer(dto);
@@ -46,6 +47,7 @@ class CustomerControllerTest {
         verify(customerService).createCustomer(dto);
     }
 
+
     @Test
     void getAllActiveCustomersShouldReturnCustomers() {
         // Given
@@ -53,7 +55,8 @@ class CustomerControllerTest {
                 new CustomerResponseDtoList(1L, "Jarvis"),
                 new CustomerResponseDtoList(2L, "Ali")
         );
-        when(customerService.getAllActiveCustomers()).thenReturn(customers);
+        when(customerService.getAllActiveCustomers())
+                .thenReturn(customers);
 
         // When
         ResponseEntity<List<CustomerResponseDtoList>> response = customerController.getAllActiveCustomers();
@@ -63,13 +66,15 @@ class CustomerControllerTest {
         assertEquals(customers, response.getBody());
     }
 
+
     @Test
     void getCustomerByIdShouldReturnCustomer() {
         // Given
         long id = 1L;
         CustomerResponseDto expectedResponse =
                 new CustomerResponseDto(id, "Jarvis", "jarvis@example.com", "+254712345678");
-        when(customerService.findCustomerById(id)).thenReturn(expectedResponse);
+        when(customerService.findCustomerById(id))
+                .thenReturn(expectedResponse);
 
         // When
         ResponseEntity<CustomerResponseDto> response = customerController.getCustomerById(id);
@@ -79,6 +84,7 @@ class CustomerControllerTest {
         assertEquals(expectedResponse, response.getBody());
     }
 
+
     @Test
     void updateCustomerShouldReturnUpdatedCustomer() {
         // Given
@@ -86,7 +92,8 @@ class CustomerControllerTest {
         CustomerDto dto = new CustomerDto("New Name", "new@example.com", "+254798765432");
         CustomerResponseDto expectedResponse =
                 new CustomerResponseDto(id, dto.name(), dto.email(), dto.phone());
-        when(customerService.updateCustomer(id, dto)).thenReturn(expectedResponse);
+        when(customerService.updateCustomer(id, dto))
+                .thenReturn(expectedResponse);
 
         // When
         ResponseEntity<CustomerResponseDto> response = customerController.updateCustomer(id, dto);
@@ -95,6 +102,7 @@ class CustomerControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(expectedResponse, response.getBody());
     }
+
 
     @Test
     void softDeleteCustomerShouldReturnNoContent() {
@@ -111,6 +119,7 @@ class CustomerControllerTest {
         verify(customerService).softDeleteCustomer(id);
     }
 
+
     @Test
     void restoreCustomerShouldReturnOk() {
         // Given
@@ -126,11 +135,13 @@ class CustomerControllerTest {
         verify(customerService).restoreCustomer(id);
     }
 
+
     @Test
     void getAllDeletedCustomersShouldReturnDeletedCustomers() {
         // Given
         List<CustomerResponseDtoList> customers = List.of(new CustomerResponseDtoList(1L, "Jarvis"));
-        when(customerService.getAllDeletedCustomers()).thenReturn(customers);
+        when(customerService.getAllDeletedCustomers())
+                .thenReturn(customers);
 
         // When
         ResponseEntity<List<CustomerResponseDtoList>> response = customerController.getAllDeletedCustomers();
@@ -139,6 +150,7 @@ class CustomerControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(customers, response.getBody());
     }
+
 
     @Test
     void permanentDeleteCustomerShouldReturnNoContent() {
@@ -152,6 +164,7 @@ class CustomerControllerTest {
         // Then
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
         assertNull(response.getBody());
-        verify(customerService).permanentDeleteCustomer(id);
+        verify(customerService)
+                .permanentDeleteCustomer(id);
     }
 }

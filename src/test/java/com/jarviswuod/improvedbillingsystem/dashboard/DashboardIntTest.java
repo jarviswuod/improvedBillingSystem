@@ -25,6 +25,8 @@ import java.util.Objects;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpMethod.POST;
 
@@ -58,7 +60,7 @@ class DashboardIntTest extends AbstractTestContainerTest {
         ResponseEntity<CustomerResponseDto> create = restTemplate.exchange(
                 CUSTOMER_API_PATH, POST, new HttpEntity<>(request), CustomerResponseDto.class);
 
-        assertThat(create.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertEquals(HttpStatus.CREATED, create.getStatusCode());
         assertThat(create.getBody()).isNotNull();
 
         return Objects.requireNonNull(create.getBody()).id();
@@ -72,7 +74,7 @@ class DashboardIntTest extends AbstractTestContainerTest {
         ResponseEntity<String> create = restTemplate.exchange(
                 INVOICE_API_PATH, POST, new HttpEntity<>(request), String.class);
 
-        assertThat(create.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertEquals(HttpStatus.CREATED, create.getStatusCode());
 
         return invoiceRepository.findAll()
                 .stream()
@@ -96,7 +98,7 @@ class DashboardIntTest extends AbstractTestContainerTest {
         ResponseEntity<String> create = restTemplate.exchange(
                 PAYMENT_API_PATH, POST, new HttpEntity<>(request), String.class);
 
-        assertThat(create.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertEquals(HttpStatus.CREATED, create.getStatusCode());
     }
 
 
@@ -115,8 +117,8 @@ class DashboardIntTest extends AbstractTestContainerTest {
         );
 
         // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
         assertThat(response.getBody().totalCustomers()).isGreaterThanOrEqualTo(1);
         assertThat(response.getBody().totalInvoices()).isGreaterThanOrEqualTo(1);
     }
@@ -139,7 +141,7 @@ class DashboardIntTest extends AbstractTestContainerTest {
         );
 
         // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
         assertThat(response.getBody()).isNotNull().isNotEmpty();
     }
 
@@ -161,7 +163,7 @@ class DashboardIntTest extends AbstractTestContainerTest {
         );
 
         // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
         assertThat(response.getBody()).isNotNull().isNotEmpty();
     }
 
@@ -178,6 +180,6 @@ class DashboardIntTest extends AbstractTestContainerTest {
         );
 
         // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
     }
 }

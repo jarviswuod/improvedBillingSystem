@@ -4,162 +4,131 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
-//@RestControllerAdvice
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessRuleViolationException.class)
-    public ResponseEntity<ApiError> handleBusinessRule(
-            BusinessRuleViolationException ex,
-            HttpServletRequest request
-    ) {
+    public ProblemDetail handleBusinessRule(BusinessRuleViolationException ex, HttpServletRequest req) {
 
-        log.warn("Business rule violation: {}", ex.getMessage());
+        log.warn("Business rule Violation {}", ex.getMessage());
 
-        ApiError error = ApiError.builder()
-                .timestamp(Instant.now())
-                .status(HttpStatus.CONFLICT.value())
-                .errorCode(ErrorCode.BUSINESS_RULE_VIOLATION)
-                .message(ex.getMessage())
-                .path(request.getRequestURI())
-                .build();
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.CONFLICT);
+        pd.setTitle("Business Rule Violation");
+        pd.setDetail(ex.getMessage());
+        pd.setInstance(URI.create(req.getRequestURI()));
+        pd.setProperty("timestamp", Instant.now().toString());
 
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
-    }
-
-
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ApiError> handleInvalidFormat(
-            HttpMessageNotReadableException ex,
-            HttpServletRequest request
-    ) {
-
-        log.warn("Invalid format exception: {}", ex.getMessage());
-
-        ApiError error = ApiError.builder()
-                .timestamp(Instant.now())
-                .status(HttpStatus.BAD_REQUEST.value())
-                .errorCode(ErrorCode.INVALID_FORMAT)
-                .message("Invalid format exception")
-                .path(request.getRequestURI())
-                .build();
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        return pd;
     }
 
 
     @ExceptionHandler(NoHandlerFoundException.class)
-    public ResponseEntity<ApiError> handleNotFound(
-            NoHandlerFoundException ex,
-            HttpServletRequest request
-    ) {
+    public ProblemDetail handleNotFound(NoHandlerFoundException ex, HttpServletRequest req) {
 
         log.warn("No handler found for {} request to {}", ex.getHttpMethod(), ex.getRequestURL());
 
-        ApiError error = ApiError.builder()
-                .timestamp(Instant.now())
-                .status(HttpStatus.NOT_FOUND.value())
-                .errorCode(ErrorCode.RESOURCE_NOT_FOUND)
-                .message("No endpoint for " + ex.getHttpMethod() + " " + ex.getRequestURL())
-                .path(request.getRequestURI())
-                .build();
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        pd.setTitle("Resource Not Found");
+        pd.setDetail("No endpoint for " + ex.getHttpMethod() + " " + ex.getRequestURL());
+        pd.setInstance(URI.create(req.getRequestURI()));
+        pd.setProperty("timestamp", Instant.now().toString());
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        return pd;
     }
 
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiError> handleNotFound(
-            ResourceNotFoundException ex,
-            HttpServletRequest request
-    ) {
+    public ProblemDetail handleNotFound(ResourceNotFoundException ex, HttpServletRequest req) {
 
         log.warn("Resource not found {}", ex.getMessage());
 
-        ApiError error = ApiError.builder()
-                .timestamp(Instant.now())
-                .status(HttpStatus.NOT_FOUND.value())
-                .errorCode(ErrorCode.RESOURCE_NOT_FOUND)
-                .message(ex.getMessage())
-                .path(request.getRequestURI())
-                .build();
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        pd.setTitle("Resource Not Found");
+        pd.setDetail(ex.getMessage());
+        pd.setInstance(URI.create(req.getRequestURI()));
+        pd.setProperty("timestamp", Instant.now().toString());
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        return pd;
+    }
+
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ProblemDetail handleInvalidFormat(HttpMessageNotReadableException ex, HttpServletRequest req) {
+
+        log.warn("Invalid format exception: {}", ex.getMessage());
+
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        pd.setTitle("Invalid format exception");
+        pd.setDetail("Invalid format exception");
+        pd.setInstance(URI.create(req.getRequestURI()));
+        pd.setProperty("timestamp", Instant.now().toString());
+
+        return pd;
     }
 
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiError> handleValidation(
-            MethodArgumentNotValidException ex,
-            HttpServletRequest request
-    ) {
+    public ProblemDetail handleValidation(MethodArgumentNotValidException ex, HttpServletRequest req) {
 
-        Map<String, String> fieldErrors = new HashMap<>();
+        Map<String, String> errors = new HashMap<>();
 
-        ex.getBindingResult().getFieldErrors()
-                .forEach(err -> fieldErrors.put(err.getField(), err.getDefaultMessage()));
+        ex.getBindingResult()
+                .getFieldErrors()
+                .forEach(e -> errors.put(e.getField(), e.getDefaultMessage()));
 
-        log.warn("Validation failed {}", fieldErrors);
+        log.warn("Validation error {}", errors);
 
-        ApiError error = ApiError.builder()
-                .timestamp(Instant.now())
-                .status(HttpStatus.BAD_REQUEST.value())
-                .errorCode(ErrorCode.VALIDATION_ERROR)
-                .message("Invalid request")
-                .path(request.getRequestURI())
-                .fieldErrors(fieldErrors)
-                .build();
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        pd.setTitle("Validation Error");
+        pd.setDetail("Invalid request body");
+        pd.setInstance(URI.create(req.getRequestURI()));
+        pd.setProperty("timestamp", Instant.now().toString());
 
-        return ResponseEntity.badRequest().body(error);
+        pd.setProperty("fieldErrors", errors);
+
+        return pd;
     }
 
 
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<ApiError> handleDataIntegrity(
-            DataIntegrityViolationException ex,
-            HttpServletRequest request
-    ) {
+    public ProblemDetail handleConflict(DataIntegrityViolationException ex, HttpServletRequest req) {
 
         log.error("Database conflict", ex);
 
-        ApiError error = ApiError.builder()
-                .timestamp(Instant.now())
-                .status(HttpStatus.CONFLICT.value())
-                .errorCode(ErrorCode.DATABASE_CONFLICT)
-                .message("Resource already exists")
-                .path(request.getRequestURI())
-                .build();
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.CONFLICT);
+        pd.setTitle("Database Conflict");
+        pd.setDetail("Resource already exists");
+        pd.setInstance(URI.create(req.getRequestURI()));
+        pd.setProperty("timestamp", Instant.now().toString());
 
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+        return pd;
     }
 
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiError> handleGeneral(
-            Exception ex,
-            HttpServletRequest request
-    ) {
+    public ProblemDetail handleGeneral(Exception ex, HttpServletRequest req) {
 
         log.error("Unexpected error", ex);
 
-        ApiError error = ApiError.builder()
-                .timestamp(Instant.now())
-                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .errorCode(ErrorCode.INTERNAL_SERVER_ERROR)
-                .message("Unexpected system error")
-                .path(request.getRequestURI())
-                .build();
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR);
+        pd.setTitle("Internal Server Error");
+        pd.setDetail("Unexpected system error");
+        pd.setInstance(URI.create(req.getRequestURI()));
+        pd.setProperty("timestamp", Instant.now().toString());
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        return pd;
     }
 }

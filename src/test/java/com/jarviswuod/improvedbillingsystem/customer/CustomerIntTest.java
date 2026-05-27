@@ -11,17 +11,18 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.http.HttpMethod.DELETE;
-import static org.springframework.http.HttpMethod.GET;
-import static org.springframework.http.HttpMethod.POST;
-import static org.springframework.http.HttpMethod.PUT;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.springframework.http.HttpMethod.*;
 
+@Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestPropertySource(properties = {
@@ -35,6 +36,7 @@ class CustomerIntTest extends AbstractTestContainerTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
+
     private CustomerDto uniqueCustomerRequest() {
         return new CustomerDto(
                 "Test User",
@@ -43,15 +45,17 @@ class CustomerIntTest extends AbstractTestContainerTest {
         );
     }
 
+
     private Long createAndFetchId(CustomerDto request) {
         ResponseEntity<CustomerResponseDto> create = restTemplate.exchange(
                 API_PATH, POST, new HttpEntity<>(request), CustomerResponseDto.class);
 
-        assertThat(create.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(create.getBody()).isNotNull();
+        assertEquals(HttpStatus.CREATED, create.getStatusCode());
+        assertNotNull(create.getBody());
 
         return Objects.requireNonNull(create.getBody()).id();
     }
+
 
     @Test
     void shouldCreateCustomer() {
@@ -63,10 +67,11 @@ class CustomerIntTest extends AbstractTestContainerTest {
                 API_PATH, POST, new HttpEntity<>(request), CustomerResponseDto.class);
 
         // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().email()).isEqualTo(request.email());
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(request.email(), response.getBody().email());
     }
+
 
     @Test
     void shouldReturnAllCustomers() {
@@ -80,9 +85,12 @@ class CustomerIntTest extends AbstractTestContainerTest {
                 });
 
         // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull().hasSizeGreaterThanOrEqualTo(2);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertThat(response.getBody())
+                .isNotNull()
+                .hasSizeGreaterThanOrEqualTo(2);
     }
+
 
     @Test
     void shouldFetchCustomerById() {
@@ -95,10 +103,11 @@ class CustomerIntTest extends AbstractTestContainerTest {
                 API_PATH + "/" + id, GET, null, CustomerResponseDto.class);
 
         // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().email()).isEqualTo(request.email());
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(request.email(), response.getBody().email());
     }
+
 
     @Test
     void shouldUpdateCustomer() {
@@ -115,11 +124,12 @@ class CustomerIntTest extends AbstractTestContainerTest {
                 API_PATH + "/" + id, PUT, new HttpEntity<>(updateRequest), CustomerResponseDto.class);
 
         // Then
-        assertThat(updateResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(updateResponse.getBody()).isNotNull();
-        assertThat(updateResponse.getBody().email()).isEqualTo(updateRequest.email());
-        assertThat(updateResponse.getBody().name()).isEqualTo(updateRequest.name());
+        assertEquals(HttpStatus.OK, updateResponse.getStatusCode());
+        assertNotNull(updateResponse.getBody());
+        assertEquals(updateRequest.email(), updateResponse.getBody().email());
+        assertEquals(updateRequest.name(), updateResponse.getBody().name());
     }
+
 
     @Test
     void shouldSoftDeleteCustomer() {
@@ -130,14 +140,14 @@ class CustomerIntTest extends AbstractTestContainerTest {
         ResponseEntity<Void> deleteResponse = restTemplate.exchange(
                 API_PATH + "/" + id, DELETE, null, Void.class);
 
-        // Then
-        assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
-
+        // TheEquals
+        assertEquals(HttpStatus.NO_CONTENT, deleteResponse.getStatusCode());
         ResponseEntity<String> fetched = restTemplate.exchange(
                 API_PATH + "/" + id, GET, null, String.class);
 
-        assertThat(fetched.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertEquals(HttpStatus.NOT_FOUND, fetched.getStatusCode());
     }
+
 
     @Test
     void shouldRestoreCustomer() {
@@ -149,16 +159,16 @@ class CustomerIntTest extends AbstractTestContainerTest {
         ResponseEntity<Void> restoreResponse = restTemplate.exchange(
                 API_PATH + "/" + id + "/restore", POST, null, Void.class);
 
-        // Then
-        assertThat(restoreResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
-
+        // TheEquals
+        assertEquals(HttpStatus.OK, restoreResponse.getStatusCode());
         ResponseEntity<CustomerResponseDto> fetched = restTemplate.exchange(
                 API_PATH + "/" + id, GET, null, CustomerResponseDto.class);
 
-        assertThat(fetched.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(fetched.getBody()).isNotNull();
-        assertThat(fetched.getBody().id()).isEqualTo(id);
+        assertEquals(HttpStatus.OK, fetched.getStatusCode());
+        assertNotNull(fetched.getBody());
+        assertEquals(id, fetched.getBody().id());
     }
+
 
     @Test
     void shouldPermanentlyDeleteSoftDeletedCustomer() {
@@ -171,13 +181,13 @@ class CustomerIntTest extends AbstractTestContainerTest {
                 API_PATH + "/" + id + "/permanent", DELETE, null, Void.class);
 
         // Then
-        assertThat(permanentDeleteResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
-
+        assertEquals(HttpStatus.NO_CONTENT, permanentDeleteResponse.getStatusCode());
         ResponseEntity<String> fetched = restTemplate.exchange(
                 API_PATH + "/" + id, GET, null, String.class);
 
-        assertThat(fetched.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertEquals(HttpStatus.NOT_FOUND, fetched.getStatusCode());
     }
+
 
     @Test
     void shouldReturn404WhenCustomerNotFound() {
@@ -189,8 +199,9 @@ class CustomerIntTest extends AbstractTestContainerTest {
                 API_PATH + "/" + nonExistentId, GET, null, String.class);
 
         // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
+
 
     @Test
     void shouldReturn400WhenCreatingCustomerWithInvalidData() {
@@ -202,8 +213,9 @@ class CustomerIntTest extends AbstractTestContainerTest {
                 API_PATH, POST, new HttpEntity<>(badRequest), String.class);
 
         // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
+
 
     @Test
     void shouldReturn409WhenCreatingDuplicateEmail() {
@@ -216,6 +228,6 @@ class CustomerIntTest extends AbstractTestContainerTest {
                 API_PATH, POST, new HttpEntity<>(request), String.class);
 
         // Then
-        assertThat(duplicate.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertEquals(HttpStatus.CONFLICT, duplicate.getStatusCode());
     }
 }

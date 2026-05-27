@@ -13,9 +13,7 @@ import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class PaymentMapperTest {
 
@@ -24,11 +22,13 @@ class PaymentMapperTest {
     @Mock
     private InvoiceService invoiceService;
 
+
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
         paymentMapper = new PaymentMapper(invoiceService);
     }
+
 
     @Test
     void toPaymentShouldMapRequestAndAttachInvoice() {
@@ -59,6 +59,7 @@ class PaymentMapperTest {
         assertEquals(dto.transactionNumber(), payment.getTransactionNumber());
         assertSame(invoice, payment.getInvoice());
     }
+
 
     @Test
     void toPaymentUpdateShouldKeepInvoiceWhenInvoiceIdIsNull() {
@@ -92,6 +93,7 @@ class PaymentMapperTest {
         assertSame(invoice, updatedPayment.getInvoice());
         verify(invoiceService, never()).getInvoiceById(org.mockito.ArgumentMatchers.anyLong());
     }
+
 
     @Test
     void toPaymentResponseDtoShouldMapEntityFields() {

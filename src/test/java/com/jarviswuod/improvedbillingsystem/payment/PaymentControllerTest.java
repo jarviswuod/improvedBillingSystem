@@ -13,9 +13,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class PaymentControllerTest {
 
@@ -24,11 +22,13 @@ class PaymentControllerTest {
     @Mock
     private PaymentService paymentService;
 
+
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
         paymentController = new PaymentController(paymentService);
     }
+
 
     @Test
     void createPaymentShouldReturnCreatedMessage() {
@@ -51,6 +51,7 @@ class PaymentControllerTest {
         verify(paymentService).createPayment(dto);
     }
 
+
     @Test
     void findAllPaymentsShouldReturnPayments() {
         // Given
@@ -61,7 +62,8 @@ class PaymentControllerTest {
                 LocalDate.now(),
                 1L
         ));
-        when(paymentService.findAllPayments()).thenReturn(payments);
+        when(paymentService.findAllPayments())
+                .thenReturn(payments);
 
         // When
         ResponseEntity<List<PaymentResponseDtoList>> response = paymentController.findAllPayments();
@@ -70,6 +72,7 @@ class PaymentControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(payments, response.getBody());
     }
+
 
     @Test
     void findPaymentByIdShouldReturnPayment() {
@@ -83,7 +86,8 @@ class PaymentControllerTest {
                 LocalDate.now(),
                 10L
         );
-        when(paymentService.findPaymentById(id)).thenReturn(expectedResponse);
+        when(paymentService.findPaymentById(id))
+                .thenReturn(expectedResponse);
 
         // When
         ResponseEntity<PaymentResponseDto> response = paymentController.findPaymentById(id);
@@ -92,6 +96,7 @@ class PaymentControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(expectedResponse, response.getBody());
     }
+
 
     @Test
     void updatePaymentShouldReturnOkMessage() {
@@ -114,6 +119,7 @@ class PaymentControllerTest {
         assertEquals("Payment updated successfully", response.getBody());
         verify(paymentService).updatePayment(dto, id);
     }
+
 
     @Test
     void deletePaymentByIdShouldReturnNoContent() {

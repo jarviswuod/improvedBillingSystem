@@ -8,6 +8,7 @@ class CustomerMapperTest {
 
     private final CustomerMapper customerMapper = new CustomerMapper();
 
+
     @Test
     void toCustomerShouldMapRequestFields() {
         // Given
@@ -21,6 +22,7 @@ class CustomerMapperTest {
         assertEquals(dto.email(), customer.getEmail());
         assertEquals(dto.phone(), customer.getPhone());
     }
+
 
     @Test
     void toCustomerResponseDtoShouldMapEntityFields() {
@@ -41,6 +43,7 @@ class CustomerMapperTest {
         assertEquals(customer.getEmail(), responseDto.email());
         assertEquals(customer.getPhone(), responseDto.phone());
     }
+
 
     @Test
     void updateCustomerShouldMutateExistingCustomer() {

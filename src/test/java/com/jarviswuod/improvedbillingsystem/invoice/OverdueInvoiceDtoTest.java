@@ -29,6 +29,7 @@ class OverdueInvoiceDtoTest {
         assertEquals(3, daysOverdue);
     }
 
+
     @Test
     void getDaysOverdueShouldReturnZeroWhenDueDateIsNull() {
         // Given
@@ -48,6 +49,7 @@ class OverdueInvoiceDtoTest {
         // Then
         assertEquals(0, daysOverdue);
     }
+
 
     @Test
     void stringStatusConstructorShouldConvertStatusToEnum() {

@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
@@ -20,10 +21,9 @@ import java.util.Objects;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.http.HttpMethod.DELETE;
-import static org.springframework.http.HttpMethod.GET;
-import static org.springframework.http.HttpMethod.POST;
-import static org.springframework.http.HttpMethod.PUT;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.springframework.http.HttpMethod.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -37,10 +37,11 @@ class InvoiceIntTest extends AbstractTestContainerTest {
     private static final String INVOICE_API_PATH = "/api/invoices";
 
     @Autowired
-    private org.springframework.boot.test.web.client.TestRestTemplate restTemplate;
+    private TestRestTemplate restTemplate;
 
     @Autowired
     private InvoiceRepository invoiceRepository;
+
 
     private Long createCustomer() {
         CustomerDto request = new CustomerDto(
@@ -52,11 +53,12 @@ class InvoiceIntTest extends AbstractTestContainerTest {
         ResponseEntity<CustomerResponseDto> create = restTemplate.exchange(
                 CUSTOMER_API_PATH, POST, new HttpEntity<>(request), CustomerResponseDto.class);
 
-        assertThat(create.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(create.getBody()).isNotNull();
+        assertEquals(HttpStatus.CREATED, create.getStatusCode());
+        assertNotNull(create.getBody());
 
         return Objects.requireNonNull(create.getBody()).id();
     }
+
 
     private InvoiceDto uniqueInvoiceRequest(Long customerId) {
         return new InvoiceDto(
@@ -66,11 +68,12 @@ class InvoiceIntTest extends AbstractTestContainerTest {
         );
     }
 
+
     private Long createInvoiceAndFetchId(InvoiceDto request) {
         ResponseEntity<String> create = restTemplate.exchange(
                 INVOICE_API_PATH, POST, new HttpEntity<>(request), String.class);
 
-        assertThat(create.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertEquals(HttpStatus.CREATED, create.getStatusCode());
 
         return invoiceRepository.findAll()
                 .stream()
@@ -80,6 +83,7 @@ class InvoiceIntTest extends AbstractTestContainerTest {
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("Invoice not found after creation"));
     }
+
 
     @Test
     void shouldCreateInvoice() {
@@ -92,10 +96,11 @@ class InvoiceIntTest extends AbstractTestContainerTest {
                 INVOICE_API_PATH, POST, new HttpEntity<>(request), String.class);
 
         // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertThat(invoiceRepository.findAll())
                 .anyMatch(invoice -> invoice.getCustomer().getId().equals(customerId));
     }
+
 
     @Test
     void shouldReturnAllInvoices() {
@@ -109,9 +114,10 @@ class InvoiceIntTest extends AbstractTestContainerTest {
                 });
 
         // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
         assertThat(response.getBody()).isNotNull().hasSizeGreaterThanOrEqualTo(2);
     }
+
 
     @Test
     void shouldFetchInvoiceById() {
@@ -124,10 +130,11 @@ class InvoiceIntTest extends AbstractTestContainerTest {
                 INVOICE_API_PATH + "/" + id, GET, null, InvoiceResponseDto.class);
 
         // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
         assertThat(response.getBody().amount()).isEqualByComparingTo(request.amount());
     }
+
 
     @Test
     void shouldUpdateInvoice() {
@@ -144,14 +151,15 @@ class InvoiceIntTest extends AbstractTestContainerTest {
                 INVOICE_API_PATH + "/" + id, PUT, new HttpEntity<>(updateRequest), String.class);
 
         // Then
-        assertThat(updateResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertEquals(HttpStatus.OK, updateResponse.getStatusCode());
 
         ResponseEntity<InvoiceResponseDto> fetched = restTemplate.exchange(
                 INVOICE_API_PATH + "/" + id, GET, null, InvoiceResponseDto.class);
 
-        assertThat(fetched.getBody()).isNotNull();
+        assertNotNull(fetched.getBody());
         assertThat(fetched.getBody().amount()).isEqualByComparingTo(updateRequest.amount());
     }
+
 
     @Test
     void shouldDeleteInvoiceWithoutPayments() {
@@ -163,13 +171,14 @@ class InvoiceIntTest extends AbstractTestContainerTest {
                 INVOICE_API_PATH + "/" + id, DELETE, null, String.class);
 
         // Then
-        assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertEquals(HttpStatus.OK, deleteResponse.getStatusCode());
 
         ResponseEntity<String> fetched = restTemplate.exchange(
                 INVOICE_API_PATH + "/" + id, GET, null, String.class);
 
-        assertThat(fetched.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertEquals(HttpStatus.NOT_FOUND, fetched.getStatusCode());
     }
+
 
     @Test
     void shouldReturn400WhenCreatingInvoiceWithInvalidData() {
@@ -185,8 +194,9 @@ class InvoiceIntTest extends AbstractTestContainerTest {
                 INVOICE_API_PATH, POST, new HttpEntity<>(badRequest), String.class);
 
         // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
+
 
     @Test
     void shouldReturn404WhenInvoiceNotFound() {
@@ -198,6 +208,6 @@ class InvoiceIntTest extends AbstractTestContainerTest {
                 INVOICE_API_PATH + "/" + nonExistentId, GET, null, String.class);
 
         // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
 }

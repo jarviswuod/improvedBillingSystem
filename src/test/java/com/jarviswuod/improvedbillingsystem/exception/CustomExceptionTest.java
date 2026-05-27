@@ -18,6 +18,7 @@ class CustomExceptionTest {
         assertEquals(message, exception.getMessage());
     }
 
+
     @Test
     void resourceNotFoundExceptionShouldKeepMessage() {
         // Given

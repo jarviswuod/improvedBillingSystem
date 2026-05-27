@@ -9,11 +9,7 @@ import com.jarviswuod.improvedbillingsystem.invoice.InvoiceService;
 import com.jarviswuod.improvedbillingsystem.invoice.InvoiceStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.*;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -25,10 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class PaymentServiceTest {
 
@@ -50,10 +43,12 @@ class PaymentServiceTest {
     @Captor
     private ArgumentCaptor<Invoice> invoiceCaptor;
 
+
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
     }
+
 
     @Test
     void createPaymentShouldSavePaymentAndMarkInvoicePartiallyPaid() {
@@ -79,9 +74,12 @@ class PaymentServiceTest {
                 .invoice(invoice)
                 .build();
 
-        when(paymentRepo.findByTransactionNumber(dto.transactionNumber())).thenReturn(null);
-        when(paymentMapper.toPayment(dto)).thenReturn(payment);
-        when(paymentRepo.save(payment)).thenReturn(payment);
+        when(paymentRepo.findByTransactionNumber(dto.transactionNumber()))
+                .thenReturn(null);
+        when(paymentMapper.toPayment(dto))
+                .thenReturn(payment);
+        when(paymentRepo.save(payment))
+                .thenReturn(payment);
 
         // When
         paymentService.createPayment(dto);
@@ -93,6 +91,7 @@ class PaymentServiceTest {
         assertEquals(InvoiceStatus.PARTIALLY_PAID, invoiceCaptor.getValue().getStatus());
         assertEquals(dto.transactionNumber(), paymentCaptor.getValue().getTransactionNumber());
     }
+
 
     @Test
     void createPaymentShouldSavePaymentAndMarkInvoicePaidWhenFullyPaid() {
@@ -119,9 +118,12 @@ class PaymentServiceTest {
                 .invoice(invoice)
                 .build();
 
-        when(paymentRepo.findByTransactionNumber(dto.transactionNumber())).thenReturn(null);
-        when(paymentMapper.toPayment(dto)).thenReturn(payment);
-        when(paymentRepo.save(payment)).thenReturn(payment);
+        when(paymentRepo.findByTransactionNumber(dto.transactionNumber()))
+                .thenReturn(null);
+        when(paymentMapper.toPayment(dto))
+                .thenReturn(payment);
+        when(paymentRepo.save(payment))
+                .thenReturn(payment);
 
         // When
         paymentService.createPayment(dto);
@@ -130,6 +132,7 @@ class PaymentServiceTest {
         verify(invoiceService).updateInvoice(invoiceCaptor.capture());
         assertEquals(InvoiceStatus.PAID, invoiceCaptor.getValue().getStatus());
     }
+
 
     @Test
     void createPaymentShouldThrowWhenTransactionNumberAlreadyExists() {
@@ -143,6 +146,7 @@ class PaymentServiceTest {
         );
 
         when(paymentRepo.findByTransactionNumber(dto.transactionNumber()))
+
                 .thenReturn(Payment.builder().transactionNumber(dto.transactionNumber()).build());
 
         // When & Then
@@ -155,6 +159,7 @@ class PaymentServiceTest {
         verify(paymentMapper, never()).toPayment(any());
         verify(paymentRepo, never()).save(any());
     }
+
 
     @Test
     void createPaymentShouldThrowWhenPaymentExceedsInvoiceAmount() {
@@ -178,8 +183,10 @@ class PaymentServiceTest {
                 .invoice(invoice)
                 .build();
 
-        when(paymentRepo.findByTransactionNumber(dto.transactionNumber())).thenReturn(null);
-        when(paymentMapper.toPayment(dto)).thenReturn(payment);
+        when(paymentRepo.findByTransactionNumber(dto.transactionNumber()))
+                .thenReturn(null);
+        when(paymentMapper.toPayment(dto))
+                .thenReturn(payment);
 
         // When & Then
         BusinessRuleViolationException exp = assertThrows(
@@ -192,11 +199,13 @@ class PaymentServiceTest {
         verify(paymentRepo, never()).save(any());
     }
 
+
     @Test
     void findPaymentByIdShouldThrowWhenPaymentDoesNotExist() {
         // Given
         long id = 99L;
-        when(paymentRepo.findById(id)).thenReturn(Optional.empty());
+        when(paymentRepo.findById(id))
+                .thenReturn(Optional.empty());
 
         // When & Then
         ResourceNotFoundException exp = assertThrows(
@@ -207,6 +216,7 @@ class PaymentServiceTest {
         assertEquals("No payment with id 99", exp.getMessage());
         verify(paymentMapper, never()).toPaymentResponseDto(any());
     }
+
 
     @Test
     void updatePaymentShouldMapAndSavePayment() {
@@ -230,9 +240,12 @@ class PaymentServiceTest {
                 .transactionNumber(dto.transactionNumber())
                 .build();
 
-        when(paymentRepo.findById(id)).thenReturn(Optional.of(payment));
-        when(paymentMapper.toPayment(dto, payment)).thenReturn(updatedPayment);
-        when(paymentRepo.save(updatedPayment)).thenReturn(updatedPayment);
+        when(paymentRepo.findById(id))
+                .thenReturn(Optional.of(payment));
+        when(paymentMapper.toPayment(dto, payment))
+                .thenReturn(updatedPayment);
+        when(paymentRepo.save(updatedPayment))
+                .thenReturn(updatedPayment);
 
         // When
         paymentService.updatePayment(dto, id);
@@ -240,6 +253,7 @@ class PaymentServiceTest {
         // Then
         verify(paymentRepo).save(updatedPayment);
     }
+
 
     @Test
     void deletePaymentByIdShouldDeletePayment() {
@@ -253,6 +267,7 @@ class PaymentServiceTest {
         // Then
         verify(paymentRepo).deleteById(id);
     }
+
 
     @Test
     void getSummaryShouldRejectInvalidDateRange() {
@@ -270,6 +285,7 @@ class PaymentServiceTest {
         verify(paymentRepo, never()).getSummary(any(), any(), any(), any());
     }
 
+
     @Test
     void findTopCustomersShouldDelegateToRepositoryWhenDateRangeIsValid() {
         // Given
@@ -277,7 +293,8 @@ class PaymentServiceTest {
         LocalDate endDate = LocalDate.now().minusDays(1);
         List<CustomersDto> customers = List.of(new CustomersDto("Jarvis", BigDecimal.valueOf(1000)));
 
-        when(paymentRepo.findTopCustomers(startDate, endDate, 5)).thenReturn(customers);
+        when(paymentRepo.findTopCustomers(startDate, endDate, 5))
+                .thenReturn(customers);
 
         // When
         List<CustomersDto> response = paymentService.findTopCustomers(startDate, endDate, 5);
@@ -286,6 +303,7 @@ class PaymentServiceTest {
         assertThat(response).hasSize(1);
         assertEquals("Jarvis", response.get(0).customerName());
     }
+
 
     @Test
     void getSummaryShouldDelegateToRepositoryWhenDateRangeIsValid() {
@@ -302,7 +320,8 @@ class PaymentServiceTest {
                 BigDecimal.valueOf(1800)
         );
 
-        when(paymentRepo.getSummary(start, end, startDate, endDate)).thenReturn(summary);
+        when(paymentRepo.getSummary(start, end, startDate, endDate))
+                .thenReturn(summary);
 
         // When
         BillingSummaryDto response = paymentService.getSummary(start, end, startDate, endDate);

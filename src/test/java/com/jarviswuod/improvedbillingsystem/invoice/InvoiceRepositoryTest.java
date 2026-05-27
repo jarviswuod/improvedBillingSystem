@@ -36,6 +36,7 @@ class InvoiceRepositoryTest extends AbstractTestContainerTest {
     @Autowired
     private PaymentRepository paymentRepository;
 
+
     @Test
     void findOverdueInvoicesShouldReturnInvoicesWithOutstandingBalance() {
         // Given
@@ -79,6 +80,7 @@ class InvoiceRepositoryTest extends AbstractTestContainerTest {
         assertThat(overdueInvoices.get(0).balance()).isEqualByComparingTo(BigDecimal.valueOf(600));
     }
 
+
     private Customer customer(String name, String email) {
         Customer customer = Customer.builder()
                 .name(name)
@@ -89,6 +91,7 @@ class InvoiceRepositoryTest extends AbstractTestContainerTest {
         customer.setUpdatedAt(Instant.now());
         return customer;
     }
+
 
     private Invoice invoice(Customer customer, BigDecimal amount, LocalDate dueDate, InvoiceStatus status) {
         Invoice invoice = Invoice.builder()
@@ -101,6 +104,7 @@ class InvoiceRepositoryTest extends AbstractTestContainerTest {
         invoice.setUpdatedAt(Instant.now());
         return invoice;
     }
+
 
     private Payment payment(Invoice invoice, BigDecimal amount, String transactionNumber) {
         Payment payment = Payment.builder()

@@ -24,11 +24,13 @@ class DashboardControllerTest {
     @Mock
     private PaymentService paymentService;
 
+
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
         dashboardController = new DashboardController(paymentService);
     }
+
 
     @Test
     void getSummaryShouldReturnBillingSummary() {
@@ -45,7 +47,8 @@ class DashboardControllerTest {
                 BigDecimal.valueOf(2500)
         );
 
-        when(paymentService.getSummary(start, end, startDate, endDate)).thenReturn(summary);
+        when(paymentService.getSummary(start, end, startDate, endDate))
+                .thenReturn(summary);
 
         // When
         ResponseEntity<BillingSummaryDto> response =
@@ -57,6 +60,7 @@ class DashboardControllerTest {
         verify(paymentService).getSummary(start, end, startDate, endDate);
     }
 
+
     @Test
     void topCustomersShouldReturnCustomers() {
         // Given
@@ -65,7 +69,8 @@ class DashboardControllerTest {
         int limit = 5;
         List<CustomersDto> customers = List.of(new CustomersDto("Jarvis", BigDecimal.valueOf(1500)));
 
-        when(paymentService.findTopCustomers(startDate, endDate, limit)).thenReturn(customers);
+        when(paymentService.findTopCustomers(startDate, endDate, limit))
+                .thenReturn(customers);
 
         // When
         ResponseEntity<List<CustomersDto>> response =
@@ -77,6 +82,7 @@ class DashboardControllerTest {
         verify(paymentService).findTopCustomers(startDate, endDate, limit);
     }
 
+
     @Test
     void monthlyRevenueShouldReturnRevenue() {
         // Given
@@ -84,7 +90,8 @@ class DashboardControllerTest {
         LocalDate endDate = LocalDate.now();
         List<MonthlyRevenueDto> revenue = List.of(new MonthlyRevenueDto("2026-05", BigDecimal.valueOf(3000)));
 
-        when(paymentService.findMonthlyRevenue(startDate, endDate)).thenReturn(revenue);
+        when(paymentService.findMonthlyRevenue(startDate, endDate))
+                .thenReturn(revenue);
 
         // When
         ResponseEntity<List<MonthlyRevenueDto>> response =

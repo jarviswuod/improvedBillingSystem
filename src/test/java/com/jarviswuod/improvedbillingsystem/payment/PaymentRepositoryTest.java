@@ -21,6 +21,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -39,6 +41,7 @@ class PaymentRepositoryTest extends AbstractTestContainerTest {
     @Autowired
     private InvoiceRepository invoiceRepository;
 
+
     @Test
     void findByTransactionNumberShouldReturnPayment() {
         // Given
@@ -49,9 +52,10 @@ class PaymentRepositoryTest extends AbstractTestContainerTest {
         Payment response = paymentRepository.findByTransactionNumber(payment.getTransactionNumber());
 
         // Then
-        assertThat(response).isNotNull();
-        assertThat(response.getId()).isEqualTo(payment.getId());
+        assertNotNull(response);
+        assertEquals(payment.getId(), response.getId());
     }
+
 
     @Test
     void getSummaryShouldReturnBillingTotals() {
@@ -68,6 +72,7 @@ class PaymentRepositoryTest extends AbstractTestContainerTest {
         assertThat(summary.totalAmountInvoiced()).isGreaterThanOrEqualTo(BigDecimal.valueOf(1000));
         assertThat(summary.totalAmountPaid()).isGreaterThanOrEqualTo(BigDecimal.valueOf(400));
     }
+
 
     @Test
     void findTopCustomersShouldOrderCustomersByTotalPaid() {
@@ -90,6 +95,7 @@ class PaymentRepositoryTest extends AbstractTestContainerTest {
         assertThat(topCustomers.get(0).totalPaid()).isGreaterThanOrEqualTo(topCustomers.get(1).totalPaid());
     }
 
+
     @Test
     void getMonthlyRevenueShouldGroupPaymentsByMonth() {
         // Given
@@ -106,6 +112,7 @@ class PaymentRepositoryTest extends AbstractTestContainerTest {
         assertThat(revenue).isNotEmpty();
         assertThat(revenue.get(0).total()).isGreaterThanOrEqualTo(BigDecimal.valueOf(400));
     }
+
 
     private Invoice savedInvoice(String customerEmail, BigDecimal amount) {
         Customer customer = Customer.builder()
@@ -127,6 +134,7 @@ class PaymentRepositoryTest extends AbstractTestContainerTest {
         invoice.setUpdatedAt(Instant.now());
         return invoiceRepository.saveAndFlush(invoice);
     }
+
 
     private Payment payment(Invoice invoice, BigDecimal amount, String transactionNumber) {
         Payment payment = Payment.builder()

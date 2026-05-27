@@ -17,9 +17,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class InvoiceMapperTest {
 
@@ -31,17 +29,22 @@ class InvoiceMapperTest {
     @Mock
     private CustomerMapper customerMapper;
 
+
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
         invoiceMapper = new InvoiceMapper(customerService, customerMapper);
     }
 
+
     @Test
     void toInvoiceShouldMapRequestAndAttachCustomer() {
         // Given
         long customerId = 1L;
-        Customer customer = Customer.builder().name("Jarvis").email("jarvis@example.com").build();
+        Customer customer = Customer.builder()
+                .name("Jarvis")
+                .email("jarvis@example.com")
+                .build();
         customer.setId(customerId);
         InvoiceDto dto = new InvoiceDto(
                 BigDecimal.valueOf(1500),
@@ -49,7 +52,8 @@ class InvoiceMapperTest {
                 customerId
         );
 
-        when(customerService.findActiveCustomerById(customerId)).thenReturn(customer);
+        when(customerService.findActiveCustomerById(customerId))
+                .thenReturn(customer);
 
         // When
         Invoice invoice = invoiceMapper.toInvoice(dto);
@@ -61,10 +65,14 @@ class InvoiceMapperTest {
         assertSame(customer, invoice.getCustomer());
     }
 
+
     @Test
     void toInvoiceUpdateShouldMutateExistingInvoiceAndKeepCustomerWhenCustomerIdIsNull() {
         // Given
-        Customer customer = Customer.builder().name("Jarvis").email("jarvis@example.com").build();
+        Customer customer = Customer.builder()
+                .name("Jarvis")
+                .email("jarvis@example.com")
+                .build();
         Invoice invoice = Invoice.builder()
                 .amount(BigDecimal.valueOf(1000))
                 .dueDate(LocalDate.now().plusDays(10))
@@ -87,10 +95,14 @@ class InvoiceMapperTest {
         verify(customerService, never()).findActiveCustomerById(org.mockito.ArgumentMatchers.anyLong());
     }
 
+
     @Test
     void toInvoiceResponseDtoShouldMapCustomerAndPayments() {
         // Given
-        Customer customer = Customer.builder().name("Jarvis").email("jarvis@example.com").build();
+        Customer customer = Customer.builder()
+                .name("Jarvis")
+                .email("jarvis@example.com")
+                .build();
         customer.setId(1L);
         Invoice invoice = Invoice.builder()
                 .amount(BigDecimal.valueOf(1500))

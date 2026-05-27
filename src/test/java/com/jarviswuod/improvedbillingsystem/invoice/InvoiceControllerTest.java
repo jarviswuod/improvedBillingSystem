@@ -13,9 +13,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 class InvoiceControllerTest {
 
@@ -24,11 +22,13 @@ class InvoiceControllerTest {
     @Mock
     private InvoiceService invoiceService;
 
+
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
         invoiceController = new InvoiceController(invoiceService);
     }
+
 
     @Test
     void createInvoiceShouldReturnCreatedMessage() {
@@ -45,6 +45,7 @@ class InvoiceControllerTest {
         verify(invoiceService).createInvoice(dto);
     }
 
+
     @Test
     void findAllInvoicesShouldReturnInvoices() {
         // Given
@@ -54,7 +55,8 @@ class InvoiceControllerTest {
                 InvoiceStatus.PENDING,
                 new CustomerResponseDtoList(1L, "Jarvis")
         ));
-        when(invoiceService.findAllInvoices()).thenReturn(invoices);
+        when(invoiceService.findAllInvoices())
+                .thenReturn(invoices);
 
         // When
         ResponseEntity<List<InvoiceResponseDtoList>> response = invoiceController.findAllInvoices();
@@ -63,6 +65,7 @@ class InvoiceControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(invoices, response.getBody());
     }
+
 
     @Test
     void findInvoiceByIdShouldReturnInvoice() {
@@ -75,7 +78,8 @@ class InvoiceControllerTest {
                 new CustomerResponseDtoList(1L, "Jarvis"),
                 List.of()
         );
-        when(invoiceService.findInvoicesById(id)).thenReturn(expectedResponse);
+        when(invoiceService.findInvoicesById(id))
+                .thenReturn(expectedResponse);
 
         // When
         ResponseEntity<InvoiceResponseDto> response = invoiceController.findInvoiceById(id);
@@ -84,6 +88,7 @@ class InvoiceControllerTest {
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(expectedResponse, response.getBody());
     }
+
 
     @Test
     void updateInvoiceShouldReturnOkMessage() {
@@ -101,6 +106,7 @@ class InvoiceControllerTest {
         verify(invoiceService).updateInvoice(dto, id);
     }
 
+
     @Test
     void deleteInvoiceShouldReturnOkMessage() {
         // Given
@@ -115,6 +121,7 @@ class InvoiceControllerTest {
         assertEquals("Invoice deleted Successfully", response.getBody());
         verify(invoiceService).deleteInvoiceById(id);
     }
+
 
     @Test
     void overDueInvoicesShouldReturnOverdueInvoices() {
@@ -131,7 +138,8 @@ class InvoiceControllerTest {
                 LocalDate.now().minusDays(2),
                 InvoiceStatus.OVERDUE
         ));
-        when(invoiceService.getOverdueInvoices(customerId, startDate, endDate)).thenReturn(invoices);
+        when(invoiceService.getOverdueInvoices(customerId, startDate, endDate))
+                .thenReturn(invoices);
 
         // When
         ResponseEntity<List<OverdueInvoiceDto>> response =

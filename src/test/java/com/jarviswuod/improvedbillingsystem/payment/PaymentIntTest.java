@@ -3,15 +3,12 @@ package com.jarviswuod.improvedbillingsystem.payment;
 import com.jarviswuod.improvedbillingsystem.AbstractTestContainerTest;
 import com.jarviswuod.improvedbillingsystem.customer.CustomerDto;
 import com.jarviswuod.improvedbillingsystem.customer.CustomerResponseDto;
-import com.jarviswuod.improvedbillingsystem.invoice.Invoice;
-import com.jarviswuod.improvedbillingsystem.invoice.InvoiceDto;
-import com.jarviswuod.improvedbillingsystem.invoice.InvoiceRepository;
-import com.jarviswuod.improvedbillingsystem.invoice.InvoiceResponseDto;
-import com.jarviswuod.improvedbillingsystem.invoice.InvoiceStatus;
+import com.jarviswuod.improvedbillingsystem.invoice.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
@@ -25,10 +22,9 @@ import java.util.Objects;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.http.HttpMethod.DELETE;
-import static org.springframework.http.HttpMethod.GET;
-import static org.springframework.http.HttpMethod.POST;
-import static org.springframework.http.HttpMethod.PUT;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.springframework.http.HttpMethod.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -43,13 +39,14 @@ class PaymentIntTest extends AbstractTestContainerTest {
     private static final String PAYMENT_API_PATH = "/api/payments";
 
     @Autowired
-    private org.springframework.boot.test.web.client.TestRestTemplate restTemplate;
+    private TestRestTemplate restTemplate;
 
     @Autowired
     private InvoiceRepository invoiceRepository;
 
     @Autowired
     private PaymentRepository paymentRepository;
+
 
     private Long createCustomer() {
         CustomerDto request = new CustomerDto(
@@ -61,11 +58,12 @@ class PaymentIntTest extends AbstractTestContainerTest {
         ResponseEntity<CustomerResponseDto> create = restTemplate.exchange(
                 CUSTOMER_API_PATH, POST, new HttpEntity<>(request), CustomerResponseDto.class);
 
-        assertThat(create.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(create.getBody()).isNotNull();
+        assertEquals(HttpStatus.CREATED, create.getStatusCode());
+        assertNotNull(create.getBody());
 
         return Objects.requireNonNull(create.getBody()).id();
     }
+
 
     private Long createInvoice(BigDecimal amount) {
         Long customerId = createCustomer();
@@ -78,7 +76,7 @@ class PaymentIntTest extends AbstractTestContainerTest {
         ResponseEntity<String> create = restTemplate.exchange(
                 INVOICE_API_PATH, POST, new HttpEntity<>(request), String.class);
 
-        assertThat(create.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertEquals(HttpStatus.CREATED, create.getStatusCode());
 
         return invoiceRepository.findAll()
                 .stream()
@@ -88,6 +86,7 @@ class PaymentIntTest extends AbstractTestContainerTest {
                 .findFirst()
                 .orElseThrow(() -> new AssertionError("Invoice not found after creation"));
     }
+
 
     private PaymentDto uniquePaymentRequest(Long invoiceId, BigDecimal amount) {
         return new PaymentDto(
@@ -99,16 +98,18 @@ class PaymentIntTest extends AbstractTestContainerTest {
         );
     }
 
+
     private Long createPaymentAndFetchId(PaymentDto request) {
         ResponseEntity<String> create = restTemplate.exchange(
                 PAYMENT_API_PATH, POST, new HttpEntity<>(request), String.class);
 
-        assertThat(create.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertEquals(HttpStatus.CREATED, create.getStatusCode());
 
         Payment payment = paymentRepository.findByTransactionNumber(request.transactionNumber());
-        assertThat(payment).isNotNull();
+        assertNotNull(payment);
         return payment.getId();
     }
+
 
     @Test
     void shouldCreatePaymentAndPartiallyPayInvoice() {
@@ -121,14 +122,15 @@ class PaymentIntTest extends AbstractTestContainerTest {
                 PAYMENT_API_PATH, POST, new HttpEntity<>(request), String.class);
 
         // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
 
         ResponseEntity<InvoiceResponseDto> invoiceResponse = restTemplate.exchange(
                 INVOICE_API_PATH + "/" + invoiceId, GET, null, InvoiceResponseDto.class);
 
-        assertThat(invoiceResponse.getBody()).isNotNull();
-        assertThat(invoiceResponse.getBody().status()).isEqualTo(InvoiceStatus.PARTIALLY_PAID);
+        assertNotNull(invoiceResponse.getBody());
+        assertEquals(InvoiceStatus.PARTIALLY_PAID, invoiceResponse.getBody().status());
     }
+
 
     @Test
     void shouldCreatePaymentAndFullyPayInvoice() {
@@ -141,14 +143,15 @@ class PaymentIntTest extends AbstractTestContainerTest {
                 PAYMENT_API_PATH, POST, new HttpEntity<>(request), String.class);
 
         // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
 
         ResponseEntity<InvoiceResponseDto> invoiceResponse = restTemplate.exchange(
                 INVOICE_API_PATH + "/" + invoiceId, GET, null, InvoiceResponseDto.class);
 
-        assertThat(invoiceResponse.getBody()).isNotNull();
-        assertThat(invoiceResponse.getBody().status()).isEqualTo(InvoiceStatus.PAID);
+        assertNotNull(invoiceResponse.getBody());
+        assertEquals(InvoiceStatus.PAID, invoiceResponse.getBody().status());
     }
+
 
     @Test
     void shouldReturnAllPayments() {
@@ -162,9 +165,10 @@ class PaymentIntTest extends AbstractTestContainerTest {
                 });
 
         // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
         assertThat(response.getBody()).isNotNull().hasSizeGreaterThanOrEqualTo(2);
     }
+
 
     @Test
     void shouldFetchPaymentById() {
@@ -177,10 +181,11 @@ class PaymentIntTest extends AbstractTestContainerTest {
                 PAYMENT_API_PATH + "/" + id, GET, null, PaymentResponseDto.class);
 
         // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().transactionNumber()).isEqualTo(request.transactionNumber());
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(request.transactionNumber(), response.getBody().transactionNumber());
     }
+
 
     @Test
     void shouldUpdatePayment() {
@@ -199,14 +204,15 @@ class PaymentIntTest extends AbstractTestContainerTest {
                 PAYMENT_API_PATH + "/" + id, PUT, new HttpEntity<>(updateRequest), String.class);
 
         // Then
-        assertThat(updateResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertEquals(HttpStatus.OK, updateResponse.getStatusCode());
 
         ResponseEntity<PaymentResponseDto> fetched = restTemplate.exchange(
                 PAYMENT_API_PATH + "/" + id, GET, null, PaymentResponseDto.class);
 
-        assertThat(fetched.getBody()).isNotNull();
-        assertThat(fetched.getBody().transactionNumber()).isEqualTo(updateRequest.transactionNumber());
+        assertNotNull(fetched.getBody());
+        assertEquals(updateRequest.transactionNumber(), fetched.getBody().transactionNumber());
     }
+
 
     @Test
     void shouldDeletePayment() {
@@ -218,8 +224,9 @@ class PaymentIntTest extends AbstractTestContainerTest {
                 PAYMENT_API_PATH + "/" + id, DELETE, null, Void.class);
 
         // Then
-        assertThat(deleteResponse.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        assertEquals(HttpStatus.NO_CONTENT, deleteResponse.getStatusCode());
     }
+
 
     @Test
     void shouldReturn409WhenCreatingDuplicateTransactionNumber() {
@@ -233,8 +240,9 @@ class PaymentIntTest extends AbstractTestContainerTest {
                 PAYMENT_API_PATH, POST, new HttpEntity<>(request), String.class);
 
         // Then
-        assertThat(duplicate.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertEquals(HttpStatus.CONFLICT, duplicate.getStatusCode());
     }
+
 
     @Test
     void shouldReturn409WhenPaymentExceedsInvoiceAmount() {
@@ -248,8 +256,9 @@ class PaymentIntTest extends AbstractTestContainerTest {
                 PAYMENT_API_PATH, POST, new HttpEntity<>(exceedingPayment), String.class);
 
         // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
     }
+
 
     @Test
     void shouldReturn400WhenCreatingPaymentWithInvalidData() {
@@ -267,6 +276,6 @@ class PaymentIntTest extends AbstractTestContainerTest {
                 PAYMENT_API_PATH, POST, new HttpEntity<>(badRequest), String.class);
 
         // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
 }

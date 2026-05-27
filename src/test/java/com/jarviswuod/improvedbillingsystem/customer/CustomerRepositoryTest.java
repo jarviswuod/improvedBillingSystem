@@ -3,8 +3,8 @@ package com.jarviswuod.improvedbillingsystem.customer;
 import com.jarviswuod.improvedbillingsystem.AbstractTestContainerTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.test.context.TestPropertySource;
 
 import java.time.Instant;
@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -24,6 +25,7 @@ class CustomerRepositoryTest extends AbstractTestContainerTest {
     @Autowired
     private CustomerRepository customerRepository;
 
+
     @Test
     void existsByEmailIncludingDeletedShouldFindActiveAndDeletedCustomers() {
         // Given
@@ -32,10 +34,14 @@ class CustomerRepositoryTest extends AbstractTestContainerTest {
         customerRepository.saveAllAndFlush(List.of(activeCustomer, deletedCustomer));
 
         // When & Then
-        assertThat(customerRepository.existsByEmailIncludingDeleted(activeCustomer.getEmail())).isTrue();
-        assertThat(customerRepository.existsByEmailIncludingDeleted(deletedCustomer.getEmail())).isTrue();
-        assertThat(customerRepository.existsByEmailIncludingDeleted("missing@example.com")).isFalse();
+        assertThat(customerRepository.existsByEmailIncludingDeleted(activeCustomer.getEmail()))
+                .isTrue();
+        assertThat(customerRepository.existsByEmailIncludingDeleted(deletedCustomer.getEmail()))
+                .isTrue();
+        assertThat(customerRepository.existsByEmailIncludingDeleted("missing@example.com"))
+                .isFalse();
     }
+
 
     @Test
     void findByIdInDeletedShouldReturnOnlyDeletedCustomer() {
@@ -47,9 +53,11 @@ class CustomerRepositoryTest extends AbstractTestContainerTest {
         Optional<Customer> response = customerRepository.findByIdInDeleted(savedCustomer.getId());
 
         // Then
-        assertThat(response).isPresent();
-        assertThat(response.get().getEmail()).isEqualTo(savedCustomer.getEmail());
+        assertThat(response)
+                .isPresent();
+        assertEquals(savedCustomer.getEmail(), response.get().getEmail());
     }
+
 
     @Test
     void findAllDeletedShouldReturnOnlyDeletedCustomers() {
@@ -69,6 +77,7 @@ class CustomerRepositoryTest extends AbstractTestContainerTest {
                 .doesNotContain("active-list@example.com");
     }
 
+
     @Test
     void permanentlyDeleteByIdShouldDeleteOnlySoftDeletedCustomer() {
         // Given
@@ -81,9 +90,11 @@ class CustomerRepositoryTest extends AbstractTestContainerTest {
         customerRepository.flush();
 
         // Then
-        assertThat(deletedCount).isEqualTo(1);
-        assertThat(customerRepository.findByIdInDeleted(deletedCustomer.getId())).isNotPresent();
+        assertEquals(1, deletedCount);
+        assertThat(customerRepository.findByIdInDeleted(deletedCustomer.getId()))
+                .isNotPresent();
     }
+
 
     private Customer customer(String name, String email, boolean deleted) {
         Customer customer = Customer.builder()

@@ -8,16 +8,18 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.core.MethodParameter;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
+import java.net.URI;
+import java.util.Map;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.when;
 
 class GlobalExceptionHandlerTest {
@@ -27,48 +29,52 @@ class GlobalExceptionHandlerTest {
     @Mock
     private HttpServletRequest request;
 
+
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
         handler = new GlobalExceptionHandler();
-        when(request.getRequestURI()).thenReturn("/api/customers");
+        when(request.getRequestURI())
+                .thenReturn("/api/customers");
     }
 
+
     @Test
-    void handleBusinessRuleShouldReturnConflictApiError() {
+    void handleBusinessRuleShouldReturnConflictProblemDetail() {
         // Given
         BusinessRuleViolationException exception = new BusinessRuleViolationException("Duplicate email");
 
         // When
-        ResponseEntity<ApiError> response = handler.handleBusinessRule(exception, request);
+        ProblemDetail problemDetail = handler.handleBusinessRule(exception, request);
 
         // Then
-        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals(ErrorCode.BUSINESS_RULE_VIOLATION, response.getBody().getErrorCode());
-        assertEquals(exception.getMessage(), response.getBody().getMessage());
-        assertEquals("/api/customers", response.getBody().getPath());
-        assertNotNull(response.getBody().getTimestamp());
+        assertEquals(HttpStatus.CONFLICT.value(), problemDetail.getStatus());
+        assertEquals("Business Rule Violation", problemDetail.getTitle());
+        assertEquals(exception.getMessage(), problemDetail.getDetail());
+        assertEquals(URI.create("/api/customers"), problemDetail.getInstance());
+        assertThat(problemDetail.getProperties()).containsKey("timestamp");
     }
 
+
     @Test
-    void handleInvalidFormatShouldReturnBadRequestApiError() {
+    void handleResourceNotFoundShouldReturnNotFoundProblemDetail() {
         // Given
-        HttpMessageNotReadableException exception =
-                new HttpMessageNotReadableException("Invalid JSON");
+        ResourceNotFoundException exception = new ResourceNotFoundException("Customer not found");
 
         // When
-        ResponseEntity<ApiError> response = handler.handleInvalidFormat(exception, request);
+        ProblemDetail problemDetail = handler.handleNotFound(exception, request);
 
         // Then
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals(ErrorCode.INVALID_FORMAT, response.getBody().getErrorCode());
-        assertEquals("Invalid format exception", response.getBody().getMessage());
+        assertEquals(HttpStatus.NOT_FOUND.value(), problemDetail.getStatus());
+        assertEquals("Resource Not Found", problemDetail.getTitle());
+        assertEquals(exception.getMessage(), problemDetail.getDetail());
+        assertEquals(URI.create("/api/customers"), problemDetail.getInstance());
+        assertThat(problemDetail.getProperties()).containsKey("timestamp");
     }
 
+
     @Test
-    void handleNoHandlerFoundShouldReturnNotFoundApiError() {
+    void handleNoHandlerFoundShouldReturnNotFoundProblemDetail() {
         // Given
         NoHandlerFoundException exception = new NoHandlerFoundException(
                 "GET",
@@ -77,39 +83,42 @@ class GlobalExceptionHandlerTest {
         );
 
         // When
-        ResponseEntity<ApiError> response = handler.handleNotFound(exception, request);
+        ProblemDetail problemDetail = handler.handleNotFound(exception, request);
 
         // Then
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals(ErrorCode.RESOURCE_NOT_FOUND, response.getBody().getErrorCode());
-        assertEquals("No endpoint for GET /api/missing", response.getBody().getMessage());
+        assertEquals(HttpStatus.NOT_FOUND.value(), problemDetail.getStatus());
+        assertEquals("Resource Not Found", problemDetail.getTitle());
+        assertEquals("No endpoint for GET /api/missing", problemDetail.getDetail());
+        assertEquals(URI.create("/api/customers"), problemDetail.getInstance());
     }
 
+
     @Test
-    void handleResourceNotFoundShouldReturnNotFoundApiError() {
+    void handleInvalidFormatShouldReturnBadRequestProblemDetail() {
         // Given
-        ResourceNotFoundException exception = new ResourceNotFoundException("Customer not found");
+        HttpMessageNotReadableException exception =
+                new HttpMessageNotReadableException("Invalid JSON");
 
         // When
-        ResponseEntity<ApiError> response = handler.handleNotFound(exception, request);
+        ProblemDetail problemDetail = handler.handleInvalidFormat(exception, request);
 
         // Then
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals(ErrorCode.RESOURCE_NOT_FOUND, response.getBody().getErrorCode());
-        assertEquals(exception.getMessage(), response.getBody().getMessage());
+        assertEquals(HttpStatus.BAD_REQUEST.value(), problemDetail.getStatus());
+        assertEquals("Invalid format exception", problemDetail.getTitle());
+        assertEquals("Invalid format exception", problemDetail.getDetail());
+        assertEquals(URI.create("/api/customers"), problemDetail.getInstance());
     }
 
+
     @Test
-    void handleValidationShouldReturnBadRequestApiErrorWithFieldErrors() throws NoSuchMethodException {
+    void handleValidationShouldReturnBadRequestWithFieldErrors() throws NoSuchMethodException {
         // Given
         BeanPropertyBindingResult bindingResult =
                 new BeanPropertyBindingResult(new ValidationTarget(), "validationTarget");
         bindingResult.addError(new FieldError(
                 "validationTarget",
-                "name",
-                "Name should not be empty"
+                "email",
+                "Email is invalid"
         ));
         MethodParameter methodParameter =
                 new MethodParameter(ValidationTarget.class.getDeclaredMethod("create", ValidationTarget.class), 0);
@@ -117,47 +126,50 @@ class GlobalExceptionHandlerTest {
                 new MethodArgumentNotValidException(methodParameter, bindingResult);
 
         // When
-        ResponseEntity<ApiError> response = handler.handleValidation(exception, request);
+        ProblemDetail problemDetail = handler.handleValidation(exception, request);
 
         // Then
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals(ErrorCode.VALIDATION_ERROR, response.getBody().getErrorCode());
-        assertEquals("Invalid request", response.getBody().getMessage());
-        assertThat(response.getBody().getFieldErrors())
-                .containsEntry("name", "Name should not be empty");
+        assertEquals(HttpStatus.BAD_REQUEST.value(), problemDetail.getStatus());
+        assertEquals("Validation Error", problemDetail.getTitle());
+        assertEquals("Invalid request body", problemDetail.getDetail());
+        assertThat(problemDetail.getProperties()).containsKey("fieldErrors");
+
+        @SuppressWarnings("unchecked")
+        Map<String, String> fieldErrors = (Map<String, String>) problemDetail.getProperties().get("fieldErrors");
+        assertEquals("Email is invalid", fieldErrors.get("email"));
     }
 
+
     @Test
-    void handleDataIntegrityShouldReturnConflictApiError() {
+    void handleConflictShouldReturnConflictProblemDetail() {
         // Given
         DataIntegrityViolationException exception =
                 new DataIntegrityViolationException("duplicate key");
 
         // When
-        ResponseEntity<ApiError> response = handler.handleDataIntegrity(exception, request);
+        ProblemDetail problemDetail = handler.handleConflict(exception, request);
 
         // Then
-        assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals(ErrorCode.DATABASE_CONFLICT, response.getBody().getErrorCode());
-        assertEquals("Resource already exists", response.getBody().getMessage());
+        assertEquals(HttpStatus.CONFLICT.value(), problemDetail.getStatus());
+        assertEquals("Database Conflict", problemDetail.getTitle());
+        assertEquals("Resource already exists", problemDetail.getDetail());
     }
 
+
     @Test
-    void handleGeneralShouldReturnInternalServerErrorApiError() {
+    void handleGeneralShouldReturnInternalServerErrorProblemDetail() {
         // Given
         Exception exception = new Exception("Unexpected");
 
         // When
-        ResponseEntity<ApiError> response = handler.handleGeneral(exception, request);
+        ProblemDetail problemDetail = handler.handleGeneral(exception, request);
 
         // Then
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals(ErrorCode.INTERNAL_SERVER_ERROR, response.getBody().getErrorCode());
-        assertEquals("Unexpected system error", response.getBody().getMessage());
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR.value(), problemDetail.getStatus());
+        assertEquals("Internal Server Error", problemDetail.getTitle());
+        assertEquals("Unexpected system error", problemDetail.getDetail());
     }
+
 
     private static class ValidationTarget {
         @SuppressWarnings("unused")
