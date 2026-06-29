@@ -1,14 +1,6 @@
 package com.jarviswuod.improvedbillingsystem.payment;
 
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
+import com.jarviswuod.improvedbillingsystem.config.CacheNames;
 import com.jarviswuod.improvedbillingsystem.dashboard.BillingSummaryDto;
 import com.jarviswuod.improvedbillingsystem.dashboard.CustomersDto;
 import com.jarviswuod.improvedbillingsystem.dashboard.MonthlyRevenueDto;
@@ -17,9 +9,19 @@ import com.jarviswuod.improvedbillingsystem.exception.ResourceNotFoundException;
 import com.jarviswuod.improvedbillingsystem.invoice.Invoice;
 import com.jarviswuod.improvedbillingsystem.invoice.InvoiceService;
 import com.jarviswuod.improvedbillingsystem.invoice.InvoiceStatus;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +33,16 @@ public class PaymentService {
     private final PaymentMapper paymentMapper;
     private final InvoiceService invoiceService;
 
+
+    @Caching(evict = {
+            @CacheEvict(value = CacheNames.INVOICE_DETAILS, key = "#paymentDto.invoiceId"),
+            @CacheEvict(value = CacheNames.INVOICES, allEntries = true),
+            @CacheEvict(value = CacheNames.PAYMENTS, allEntries = true),
+            @CacheEvict(value = CacheNames.DASHBOARD_SUMMARY, allEntries = true),
+            @CacheEvict(value = CacheNames.TOP_CUSTOMERS, allEntries = true),
+            @CacheEvict(value = CacheNames.MONTHLY_REVENUE, allEntries = true),
+            @CacheEvict(value = CacheNames.OVERDUE_INVOICES, allEntries = true)
+    })
     public void createPayment(PaymentDto paymentDto) {
 
         Payment existingPayment = findByTransactionNumber(paymentDto.transactionNumber());
@@ -46,9 +58,11 @@ public class PaymentService {
         log.info("Payment created successfully with paymentId {}", savedPayment.getId());
     }
 
+
     private Payment findByTransactionNumber(String transactionNumber) {
         return paymentRepo.findByTransactionNumber(transactionNumber);
     }
+
 
     private void invoiceStatusUpdate(Payment payment) {
         Invoice invoice = payment.getInvoice();
@@ -75,7 +89,9 @@ public class PaymentService {
         log.info("Invoice status updated {}, {}", invoice.getId(), invoice.getStatus());
     }
 
+
     @Transactional(readOnly = true)
+    @Cacheable(value = CacheNames.PAYMENTS, key = "'all'")
     public List<PaymentResponseDtoList> findAllPayments() {
 
         return paymentRepo.findAll()
@@ -84,12 +100,15 @@ public class PaymentService {
                 .collect(Collectors.toList());
     }
 
+
     private Payment getPaymentById(Long id) {
         return paymentRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("No payment with id " + id));
     }
 
+
     @Transactional(readOnly = true)
+    @Cacheable(value = CacheNames.PAYMENT_DETAILS, key = "#id")
     public PaymentResponseDto findPaymentById(Long id) {
 
         PaymentResponseDto dto = paymentMapper.toPaymentResponseDto(getPaymentById(id));
@@ -98,6 +117,17 @@ public class PaymentService {
         return dto;
     }
 
+
+    @Caching(evict = {
+            @CacheEvict(value = CacheNames.PAYMENT_DETAILS, key = "#id"),
+            @CacheEvict(value = CacheNames.INVOICE_DETAILS, allEntries = true),
+            @CacheEvict(value = CacheNames.INVOICES, allEntries = true),
+            @CacheEvict(value = CacheNames.PAYMENTS, allEntries = true),
+            @CacheEvict(value = CacheNames.DASHBOARD_SUMMARY, allEntries = true),
+            @CacheEvict(value = CacheNames.TOP_CUSTOMERS, allEntries = true),
+            @CacheEvict(value = CacheNames.MONTHLY_REVENUE, allEntries = true),
+            @CacheEvict(value = CacheNames.OVERDUE_INVOICES, allEntries = true)
+    })
     public void updatePayment(UpdatePaymentDto dto, Long id) {
         Payment payment = getPaymentById(id);
 
@@ -106,12 +136,28 @@ public class PaymentService {
         log.info("Payment updated successfully  paymentId {}", id);
     }
 
+
+    @Caching(evict = {
+            @CacheEvict(value = CacheNames.PAYMENT_DETAILS, key = "#id"),
+            @CacheEvict(value = CacheNames.INVOICE_DETAILS, allEntries = true),
+            @CacheEvict(value = CacheNames.INVOICES, allEntries = true),
+            @CacheEvict(value = CacheNames.PAYMENTS, allEntries = true),
+            @CacheEvict(value = CacheNames.DASHBOARD_SUMMARY, allEntries = true),
+            @CacheEvict(value = CacheNames.TOP_CUSTOMERS, allEntries = true),
+            @CacheEvict(value = CacheNames.MONTHLY_REVENUE, allEntries = true),
+            @CacheEvict(value = CacheNames.OVERDUE_INVOICES, allEntries = true)
+    })
     public void deletePaymentById(Long id) {
         paymentRepo.deleteById(id);
         log.info("Payment successfully deleted paymentId {}", id);
     }
 
+
     @Transactional(readOnly = true)
+    @Cacheable(
+            value = CacheNames.DASHBOARD_SUMMARY,
+            key = "{'summary', #start, #end, #startDate, #endDate}"
+    )
     public BillingSummaryDto getSummary(
             Instant start, Instant end,
             LocalDate startDate, LocalDate endDate) {
@@ -120,12 +166,18 @@ public class PaymentService {
         return paymentRepo.getSummary(start, end, startDate, endDate);
     }
 
+
     @Transactional(readOnly = true)
+    @Cacheable(
+            value = CacheNames.TOP_CUSTOMERS,
+            key = "{'top', #startDate, #endDate, #limit}"
+    )
     public List<CustomersDto> findTopCustomers(LocalDate startDate, LocalDate endDate, int limit) {
 
         dateValidation(startDate, endDate);
         return paymentRepo.findTopCustomers(startDate, endDate, limit);
     }
+
 
     private void dateValidation(LocalDate startDate, LocalDate endDate) {
 
@@ -139,7 +191,12 @@ public class PaymentService {
         }
     }
 
+
     @Transactional(readOnly = true)
+    @Cacheable(
+            value = CacheNames.MONTHLY_REVENUE,
+            key = "{#startDate, #endDate}"
+    )
     public List<MonthlyRevenueDto> findMonthlyRevenue(LocalDate startDate, LocalDate endDate) {
 
         dateValidation(startDate, endDate);

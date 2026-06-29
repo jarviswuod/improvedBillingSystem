@@ -1,9 +1,13 @@
 package com.jarviswuod.improvedbillingsystem.customer;
 
+import com.jarviswuod.improvedbillingsystem.config.CacheNames;
 import com.jarviswuod.improvedbillingsystem.exception.BusinessRuleViolationException;
 import com.jarviswuod.improvedbillingsystem.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +25,11 @@ public class CustomerService {
     private final CustomerMapper customerMapper;
 
 
+    @Caching(evict = {
+            @CacheEvict(value = CacheNames.CUSTOMERS, allEntries = true),
+            @CacheEvict(value = CacheNames.DELETED_CUSTOMERS, allEntries = true),
+            @CacheEvict(value = CacheNames.DASHBOARD_SUMMARY, allEntries = true)
+    })
     public CustomerResponseDto createCustomer(CustomerDto customerDto) {
         if (customerRepo.existsByEmailIncludingDeleted(customerDto.email())) {
             log.warn("Already Existing customer with email");
@@ -36,6 +45,7 @@ public class CustomerService {
 
 
     @Transactional(readOnly = true)
+    @Cacheable(value = CacheNames.CUSTOMERS, key = "'active'")
     public List<CustomerResponseDtoList> getAllActiveCustomers() {
         return customerRepo.findAll()
                 .stream()
@@ -45,6 +55,7 @@ public class CustomerService {
 
 
     @Transactional(readOnly = true)
+    @Cacheable(value = CacheNames.CUSTOMER_DETAILS, key = "#id")
     public CustomerResponseDto findCustomerById(Long id) {
         Customer customer = findActiveCustomerById(id);
 
@@ -60,6 +71,11 @@ public class CustomerService {
     }
 
 
+    @Caching(evict = {
+            @CacheEvict(value = CacheNames.CUSTOMER_DETAILS, key = "#id"),
+            @CacheEvict(value = CacheNames.CUSTOMERS, allEntries = true),
+            @CacheEvict(value = CacheNames.TOP_CUSTOMERS, allEntries = true)
+    })
     public CustomerResponseDto updateCustomer(Long id, CustomerDto customerDto) {
         Customer customer = findActiveCustomerById(id);
 
@@ -75,6 +91,13 @@ public class CustomerService {
     }
 
 
+    @Caching(evict = {
+            @CacheEvict(value = CacheNames.CUSTOMER_DETAILS, key = "#id"),
+            @CacheEvict(value = CacheNames.CUSTOMERS, allEntries = true),
+            @CacheEvict(value = CacheNames.DELETED_CUSTOMERS, allEntries = true),
+            @CacheEvict(value = CacheNames.DASHBOARD_SUMMARY, allEntries = true),
+            @CacheEvict(value = CacheNames.TOP_CUSTOMERS, allEntries = true)
+    })
     public void softDeleteCustomer(Long id) {
         Optional<Customer> customerActive = customerRepo.findById(id);
         Optional<Customer> customerDeleted = customerRepo.findByIdInDeleted(id);
@@ -92,6 +115,13 @@ public class CustomerService {
     }
 
 
+    @Caching(evict = {
+            @CacheEvict(value = CacheNames.CUSTOMER_DETAILS, key = "#id"),
+            @CacheEvict(value = CacheNames.CUSTOMERS, allEntries = true),
+            @CacheEvict(value = CacheNames.DELETED_CUSTOMERS, allEntries = true),
+            @CacheEvict(value = CacheNames.DASHBOARD_SUMMARY, allEntries = true),
+            @CacheEvict(value = CacheNames.TOP_CUSTOMERS, allEntries = true)
+    })
     public void restoreCustomer(Long id) {
         Optional<Customer> customer = customerRepo.findById(id);
         if (customer.isPresent()) {
@@ -111,6 +141,7 @@ public class CustomerService {
 
 
     @Transactional(readOnly = true)
+    @Cacheable(value = CacheNames.DELETED_CUSTOMERS, key = "'deleted'")
     public List<CustomerResponseDtoList> getAllDeletedCustomers() {
         return customerRepo.findAllDeleted()
                 .stream()
@@ -119,6 +150,12 @@ public class CustomerService {
     }
 
 
+    @Caching(evict = {
+            @CacheEvict(value = CacheNames.CUSTOMER_DETAILS, key = "#id"),
+            @CacheEvict(value = CacheNames.DELETED_CUSTOMERS, allEntries = true),
+            @CacheEvict(value = CacheNames.DASHBOARD_SUMMARY, allEntries = true),
+            @CacheEvict(value = CacheNames.TOP_CUSTOMERS, allEntries = true)
+    })
     public void permanentDeleteCustomer(Long id) {
         Optional<Customer> customer = customerRepo.findById(id);
 

@@ -1,11 +1,15 @@
 package com.jarviswuod.improvedbillingsystem.invoice;
 
+import com.jarviswuod.improvedbillingsystem.config.CacheNames;
 import com.jarviswuod.improvedbillingsystem.customer.CustomerService;
 import com.jarviswuod.improvedbillingsystem.exception.BusinessRuleViolationException;
 import com.jarviswuod.improvedbillingsystem.exception.ResourceNotFoundException;
 import com.jarviswuod.improvedbillingsystem.payment.Payment;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +31,11 @@ public class InvoiceService {
     private final CustomerService customerService;
 
 
+    @Caching(evict = {
+            @CacheEvict(value = CacheNames.INVOICES, allEntries = true),
+            @CacheEvict(value = CacheNames.OVERDUE_INVOICES, allEntries = true),
+            @CacheEvict(value = CacheNames.DASHBOARD_SUMMARY, allEntries = true)
+    })
     public void createInvoice(InvoiceDto invoiceDto) {
         Invoice invoice = invoiceMapper.toInvoice(invoiceDto);
 
@@ -36,6 +45,7 @@ public class InvoiceService {
 
 
     @Transactional(readOnly = true)
+    @Cacheable(value = CacheNames.INVOICES, key = "'all'")
     public List<InvoiceResponseDtoList> findAllInvoices() {
         return invoiceRepo.findAll()
                 .stream()
@@ -45,6 +55,7 @@ public class InvoiceService {
 
 
     @Transactional(readOnly = true)
+    @Cacheable(value = CacheNames.INVOICE_DETAILS, key = "#id")
     public InvoiceResponseDto findInvoicesById(Long id) {
         Invoice invoice = getInvoiceById(id);
         log.info("Invoice retrieved {}", invoice.getId());
@@ -59,6 +70,14 @@ public class InvoiceService {
     }
 
 
+    @Caching(evict = {
+            @CacheEvict(value = CacheNames.INVOICE_DETAILS, key = "#id"),
+            @CacheEvict(value = CacheNames.INVOICES, allEntries = true),
+            @CacheEvict(value = CacheNames.OVERDUE_INVOICES, allEntries = true),
+            @CacheEvict(value = CacheNames.DASHBOARD_SUMMARY, allEntries = true),
+            @CacheEvict(value = CacheNames.TOP_CUSTOMERS, allEntries = true),
+            @CacheEvict(value = CacheNames.MONTHLY_REVENUE, allEntries = true)
+    })
     public void deleteInvoiceById(Long id) {
         Invoice invoice = getInvoiceById(id);
         List<Payment> payments = invoice.getPayments();
@@ -73,12 +92,24 @@ public class InvoiceService {
     }
 
 
+    @Caching(evict = {
+            @CacheEvict(value = CacheNames.INVOICE_DETAILS, key = "#invoice.id"),
+            @CacheEvict(value = CacheNames.INVOICES, allEntries = true),
+            @CacheEvict(value = CacheNames.OVERDUE_INVOICES, allEntries = true),
+            @CacheEvict(value = CacheNames.DASHBOARD_SUMMARY, allEntries = true)
+    })
     public void updateInvoice(Invoice invoice) {
         invoiceRepo.save(invoice);
         log.info("Invoice with invoiceId updated successfully {}", invoice.getId());
     }
 
 
+    @Caching(evict = {
+            @CacheEvict(value = CacheNames.INVOICE_DETAILS, key = "#id"),
+            @CacheEvict(value = CacheNames.INVOICES, allEntries = true),
+            @CacheEvict(value = CacheNames.OVERDUE_INVOICES, allEntries = true),
+            @CacheEvict(value = CacheNames.DASHBOARD_SUMMARY, allEntries = true)
+    })
     public void updateInvoice(InvoiceUpdateDto dto, Long id) {
 
         updateInvoice(invoiceMapper.toInvoice(dto, getInvoiceById(id)));
@@ -97,6 +128,10 @@ public class InvoiceService {
 
 
     @Transactional(readOnly = true)
+    @Cacheable(
+            value = CacheNames.OVERDUE_INVOICES,
+            key = "{#customerId, #startDate, #endDate}"
+    )
     public List<OverdueInvoiceDto> getOverdueInvoices(
             Long customerId,
             LocalDate startDate,

@@ -6,7 +6,7 @@ spring:
       on-profile: prod
 
   datasource:
-    url: jdbc:postgresql://localhost:5438/billing
+    url: jdbc:postgresql://localhost:5434/billing
     username: username
     password: password
     driver-class-name: org.postgresql.Driver
@@ -17,6 +17,17 @@ spring:
     show-sql: true
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  cache:
+    type: redis
+    redis:
+      key-prefix: "billing:"
+      time-to-live: 10m
 
 server:
   port: 8081

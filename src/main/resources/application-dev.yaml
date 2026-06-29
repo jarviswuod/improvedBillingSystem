@@ -18,6 +18,17 @@ spring:
     database: postgresql
     database-platform: org.hibernate.dialect.PostgreSQLDialect
 
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  cache:
+    type: redis
+    redis:
+      key-prefix: "billing:"
+      time-to-live: 10m
+
 server:
   port: 8080
 
